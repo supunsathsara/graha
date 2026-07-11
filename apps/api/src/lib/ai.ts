@@ -155,11 +155,12 @@ async function interpretWithHuggingFace(
     }
   );
 
-  if (!response.ok) {
-    throw new Error(`Hugging Face API error: ${response.status} ${response.statusText}`);
+  if (!(response as any).ok) {
+    const err = response as any;
+    throw new Error(`Hugging Face API error: ${err.status} ${err.statusText}`);
   }
 
-  const result = (await response.json()) as Array<{ generated_text: string }>;
+  const result = (await (response as any).json()) as Array<{ generated_text: string }>;
   return result[0]?.generated_text || "{}";
 }
 
