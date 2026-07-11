@@ -170,35 +170,50 @@ In local development, leave `API_SECRET` blank to skip the check.
 
 ## Deployment
 
-Deploy as **two separate Vercel projects** with the **monorepo root** as the root directory
-for both (so the lockfile at the root is found):
+### Two Vercel projects (recommended for monorepos)
 
-> ⚠️ **Important:** In each project's Vercel dashboard, set the **Install Command** to `pnpm install`
-> so Vercel uses pnpm instead of npm. The root `vercel.json` also sets this.
+Vercel has built-in monorepo support. Connect your repo once, then add **two projects**
+from the same repository. Vercel auto-detects the workspace config and installs
+dependencies from the root `pnpm-lock.yaml`.
 
-### graha-api (Hono backend)
+#### graha-api (Hono backend)
 
 | Setting | Value |
 |---|---|
-| Root directory | `.` (monorepo root) |
-| Framework | Other |
-| Install command | `pnpm install` |
-| Build command | `cd apps/api && pnpm build` |
-| Output directory | `apps/api/dist` |
+| **Root Directory** | `apps/api` |
+| **Framework Preset** | Other |
+| **Build Command** | `pnpm build` |
+| **Output Directory** | `dist` |
 
 Environment variables: `GROQ_API_KEY`, `DATABASE_URL`, `API_SECRET`
 
-### graha-web (Next.js frontend)
+#### graha-web (Next.js frontend)
 
 | Setting | Value |
 |---|---|
-| Root directory | `.` (monorepo root) |
-| Framework | Next.js |
-| Install command | `pnpm install` |
-| Build command | `cd apps/web && pnpm build` |
-| Output directory | `apps/web/.next` |
+| **Root Directory** | `apps/web` |
+| **Framework Preset** | Next.js |
+| **Build Command** | `pnpm build` |
+| **Output Directory** | `.next` |
 
-Environment variables: `API_URL` (deployed API URL, e.g. `https://graha-api.vercel.app`), `API_SECRET` (same value as API project)
+Environment variables: `API_URL` (set to the deployed API URL, e.g. `https://graha-api.vercel.app`)
+
+The Next.js app has a proxy route that forwards `/api/*` requests to the API URL.
+No CORS issues — the frontend calls its own domain (`/api/...`), and the proxy
+forwards to the API project internally.
+
+### Single Vercel project (simpler, everything on one domain)
+
+| Setting | Value |
+|---|---|
+| **Root Directory** | (empty) |
+| **Framework Preset** | Other |
+| **Build Command** | Override → `cd apps/web && pnpm build` |
+| **Output Directory** | Override → `apps/web/.next` |
+| **Install Command** | Override → `pnpm install` |
+
+This approach requires the root `vercel.json` with `functions` and `rewrites` to route
+`/api/*` to the Hono Edge Function.
 
 ## Database
 
