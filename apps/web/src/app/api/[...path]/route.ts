@@ -1,36 +1,37 @@
 /**
  * API proxy — forwards /api/* requests to the Hono backend.
  *
- * Uses Vercel's Related Projects feature to automatically discover
- * the API URL. Falls back to API_URL env var, then localhost for dev.
- *
- * Adds X-Graha-Secret header server-side (hidden from browser).
+ * Tries, in order:
+ *   1. API_URL env var (set manually in Vercel dashboard — most reliable)
+ *   2. VERCEL_RELATED_PROJECTS (auto-injected by Vercel Related Projects)
+ *   3. localhost:3001 (local dev)
  */
 
 export const runtime = "edge";
 
 function getApiUrl(): string {
-  // 1. Vercel Related Projects (auto-injected for preview/production)
+  // 1. Manual env var (most reliable, always works)
+  if (process.env.API_URL) return process.env.API_URL;
+
+  // 2. Vercel Related Projects
   try {
     const raw = process.env.VERCEL_RELATED_PROJECTS;
     if (raw) {
       const projects = JSON.parse(raw);
-      const apiProject = projects["prj_9rFRuW6H7TcXE59dTn8t6zg1ZgZy"];
+      // Try both project ID and project name as key
+      const apiProject = projects["prj_9rFRuW6H7TcXE59dTn8t6zg1ZgZy"] || projects["graha-api"];
       if (apiProject?.urls?.production) {
         return `https://${apiProject.urls.production}`;
       }
     }
   } catch {}
 
-  // 2. Manual env var
-  if (process.env.API_URL) return process.env.API_URL;
-
   // 3. Local dev
   return "http://localhost:3001";
 }
 
 const TARGET = getApiUrl();
-const API_SECRET = process.env.API_SECRET;
+const API_SECRET = proc**************CRET;
 
 export async function GET(request: Request) {
   return proxy(request);
@@ -54,7 +55,6 @@ async function proxy(request: Request): Promise<Response> {
       ? await request.arrayBuffer()
       : undefined;
 
-    // Add API secret header server-side (hidden from browser)
     const headers = new Headers(request.headers);
     if (API_SECRET) {
       headers.set("X-Graha-Secret", API_SECRET);
