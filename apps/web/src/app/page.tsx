@@ -29,7 +29,10 @@ const SRI_LANKA_CITIES = [
 ];
 
 // Simple Nominatim query cache to avoid duplicate requests
-const geocodeCache = new Map<string, Array<{display_name: string; lat: string; lon: string}>>();
+const geocodeCache = new Map<
+  string,
+  Array<{ display_name: string; lat: string; lon: string }>
+>();
 
 type TabName = "overview" | "planets" | "yogas" | "navamsa" | "remedies";
 
@@ -44,7 +47,9 @@ export default function Home() {
   });
   const [activeTab, setActiveTab] = useState<TabName>("overview");
   const [locationQuery, setLocationQuery] = useState("");
-  const [locationResults, setLocationResults] = useState<Array<{display_name: string; lat: string; lon: string}>>([]);
+  const [locationResults, setLocationResults] = useState<
+    Array<{ display_name: string; lat: string; lon: string }>
+  >([]);
   const [searchingLocation, setSearchingLocation] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState("");
   let searchTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -70,7 +75,11 @@ export default function Home() {
   });
 
   const setCity = (lat: number, lon: number) => {
-    setForm((f) => ({ ...f, latitude: lat.toString(), longitude: lon.toString() }));
+    setForm((f) => ({
+      ...f,
+      latitude: lat.toString(),
+      longitude: lon.toString(),
+    }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -99,7 +108,8 @@ export default function Home() {
             </h1>
             <p className="text-sm sm:text-base md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed px-2">
               Accurate birth chart calculations powered by Swiss Ephemeris.
-              Sidereal Vedic astrology with planetary dignities, yogas, doshas, and remedies.
+              Sidereal Vedic astrology with planetary dignities, yogas, doshas,
+              and remedies.
             </p>
           </motion.div>
         </div>
@@ -123,12 +133,15 @@ export default function Home() {
                 {/* Name */}
                 <div className="space-y-1.5">
                   <label className="text-sm text-muted-foreground flex items-center gap-1.5">
-                    <User className="w-3.5 h-3.5" /> Name <span className="text-muted-foreground/50">(optional)</span>
+                    <User className="w-3.5 h-3.5" /> Name{" "}
+                    <span className="text-muted-foreground/50">(optional)</span>
                   </label>
                   <input
                     type="text"
                     value={form.name}
-                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, name: e.target.value }))
+                    }
                     placeholder="e.g. Kamal Perera"
                     className="w-full bg-background border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition"
                   />
@@ -161,24 +174,33 @@ export default function Home() {
                           setSearchingLocation(true);
                           try {
                             const res = await fetch(
-                              `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=lk`
+                              `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=5`,
                             );
                             if (!res.ok) {
-                              if (res.status === 429) {
-                                // Rate limited — retry after 3s
-                                setTimeout(() => {
-                                  setSearchingLocation(false);
-                                }, 3000);
-                                return;
-                              }
                               return;
                             }
-                            const data = await res.json();
+                            const raw = await res.json();
+                            // Photon returns GeoJSON format — transform to simple format
+                            const data = (raw.features || []).map((f: any) => {
+                              const props = f.properties || {};
+                              const coords = f.geometry?.coordinates || [0, 0];
+                              const parts = [
+                                props.name,
+                                props.city,
+                                props.state,
+                                props.country,
+                              ].filter(Boolean);
+                              return {
+                                display_name: [...new Set(parts)].join(", "),
+                                lat: String(coords[1]),
+                                lon: String(coords[0]),
+                              };
+                            });
                             geocodeCache.set(q, data);
                             setLocationResults(data);
                           } catch {}
                           setSearchingLocation(false);
-                        }, 1200);
+                        }, 2000);
                       }}
                       placeholder="Search for a city (e.g. Colombo, Galle)"
                       className="w-full bg-background border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition"
@@ -191,20 +213,26 @@ export default function Home() {
                         {locationResults.map((r, i) => {
                           const shortName = r.display_name.split(",")[0];
                           return (
-                          <button
-                            key={i}
-                            type="button"
-                            onClick={() => {
-                              setForm((f) => ({ ...f, latitude: r.lat, longitude: r.lon }));
-                              setLocationQuery(shortName);
-                              setSelectedLocation(r.display_name);
-                              setLocationResults([]);
-                            }}
-                            className="w-full text-left px-3 py-2 text-xs hover:bg-secondary/50 transition border-b border-border last:border-0"
-                          >
-                            <span className="font-medium">{shortName}</span>
-                            <span className="block text-muted-foreground truncate">{r.display_name}</span>
-                          </button>
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() => {
+                                setForm((f) => ({
+                                  ...f,
+                                  latitude: r.lat,
+                                  longitude: r.lon,
+                                }));
+                                setLocationQuery(shortName);
+                                setSelectedLocation(r.display_name);
+                                setLocationResults([]);
+                              }}
+                              className="w-full text-left px-3 py-2 text-xs hover:bg-secondary/50 transition border-b border-border last:border-0"
+                            >
+                              <span className="font-medium">{shortName}</span>
+                              <span className="block text-muted-foreground truncate">
+                                {r.display_name}
+                              </span>
+                            </button>
                           );
                         })}
                       </div>
@@ -212,7 +240,9 @@ export default function Home() {
                   </div>
                   {selectedLocation && (
                     <span className="text-xs text-muted-foreground">
-                      {form.latitude && form.longitude ? `${form.latitude}°N, ${form.longitude}°E` : ""}
+                      {form.latitude && form.longitude
+                        ? `${form.latitude}°N, ${form.longitude}°E`
+                        : ""}
                     </span>
                   )}
                 </div>
@@ -226,7 +256,9 @@ export default function Home() {
                     <input
                       type="date"
                       value={form.birthDate}
-                      onChange={(e) => setForm((f) => ({ ...f, birthDate: e.target.value }))}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, birthDate: e.target.value }))
+                      }
                       required
                       className="w-full bg-background border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition [color-scheme:dark]"
                     />
@@ -238,7 +270,9 @@ export default function Home() {
                     <input
                       type="time"
                       value={form.birthTime}
-                      onChange={(e) => setForm((f) => ({ ...f, birthTime: e.target.value }))}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, birthTime: e.target.value }))
+                      }
                       required
                       className="w-full bg-background border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition [color-scheme:dark]"
                     />
@@ -255,7 +289,9 @@ export default function Home() {
                       type="number"
                       step="any"
                       value={form.latitude}
-                      onChange={(e) => setForm((f) => ({ ...f, latitude: e.target.value }))}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, latitude: e.target.value }))
+                      }
                       placeholder="e.g. 6.9271"
                       required
                       className="w-full bg-background border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition"
@@ -269,7 +305,9 @@ export default function Home() {
                       type="number"
                       step="any"
                       value={form.longitude}
-                      onChange={(e) => setForm((f) => ({ ...f, longitude: e.target.value }))}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, longitude: e.target.value }))
+                      }
                       placeholder="e.g. 79.8612"
                       required
                       className="w-full bg-background border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition"
@@ -279,7 +317,9 @@ export default function Home() {
 
                 {/* Quick city buttons */}
                 <div className="space-y-1.5">
-                  <label className="text-sm text-muted-foreground">Quick fill (Sri Lanka)</label>
+                  <label className="text-sm text-muted-foreground">
+                    Quick fill (Sri Lanka)
+                  </label>
                   <div className="flex flex-wrap gap-1.5">
                     {SRI_LANKA_CITIES.map((city) => (
                       <button
@@ -301,7 +341,9 @@ export default function Home() {
                   </label>
                   <select
                     value={form.timezone}
-                    onChange={(e) => setForm((f) => ({ ...f, timezone: e.target.value }))}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, timezone: e.target.value }))
+                    }
                     className="w-full bg-background border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition"
                   >
                     <option value="Asia/Colombo">Sri Lanka (UTC+5:30)</option>
@@ -346,7 +388,8 @@ export default function Home() {
                   <div>
                     <p className="font-medium text-sm">Error</p>
                     <p className="text-sm text-muted-foreground">
-                      {(mutation.error as Error)?.message || "Something went wrong"}
+                      {(mutation.error as Error)?.message ||
+                        "Something went wrong"}
                     </p>
                   </div>
                 </motion.div>
@@ -389,20 +432,24 @@ export default function Home() {
             </AnimatePresence>
 
             {/* Empty state */}
-            {!mutation.isPending && !mutation.isSuccess && !mutation.isError && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="bg-card border border-border rounded-xl p-6 md:p-12 text-center"
-              >
-                <Moon className="w-12 h-12 text-primary/40 mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">Your Horoscope Awaits</h3>
-                <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                  Enter birth details to compute an accurate Vedic birth chart with planetary positions,
-                  yogas, doshas, and remedies.
-                </p>
-              </motion.div>
-            )}
+            {!mutation.isPending &&
+              !mutation.isSuccess &&
+              !mutation.isError && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="bg-card border border-border rounded-xl p-6 md:p-12 text-center"
+                >
+                  <Moon className="w-12 h-12 text-primary/40 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">
+                    Your Horoscope Awaits
+                  </h3>
+                  <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                    Enter birth details to compute an accurate Vedic birth chart
+                    with planetary positions, yogas, doshas, and remedies.
+                  </p>
+                </motion.div>
+              )}
           </div>
         </div>
       </main>
@@ -467,8 +514,12 @@ function ChartResults({
 
       {/* Tab content */}
       <div className="p-4 md:p-6">
-        {activeTab === "overview" && <OverviewTab reading={reading} chart={chart} />}
-        {activeTab === "planets" && <PlanetsTab reading={reading} chart={chart} />}
+        {activeTab === "overview" && (
+          <OverviewTab reading={reading} chart={chart} />
+        )}
+        {activeTab === "planets" && (
+          <PlanetsTab reading={reading} chart={chart} />
+        )}
         {activeTab === "yogas" && <YogasTab reading={reading} />}
         {activeTab === "navamsa" && <NavamsaTab reading={reading} />}
         {activeTab === "remedies" && <RemediesTab reading={reading} />}
@@ -489,19 +540,28 @@ function OverviewTab({ reading, chart }: { reading: any; chart: any }) {
     >
       {/* Core info */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
-        <StatCard label="Lagna" value={ZODIAC_NAMES[chart?.lagna?.sign]?.en || "—"} />
-        <StatCard label="Lagna Degree" value={`${chart?.lagna?.degree?.toFixed(1) || "—"}°`} />
+        <StatCard
+          label="Lagna"
+          value={ZODIAC_NAMES[chart?.lagna?.sign]?.en || "—"}
+        />
+        <StatCard
+          label="Lagna Degree"
+          value={`${chart?.lagna?.degree?.toFixed(1) || "—"}°`}
+        />
         <StatCard label="Planets" value={`${chart?.planets?.length || 0}`} />
-        <StatCard label="Dasa" value={reading?.currentDasa?.lordName?.en || "—"} />
+        <StatCard
+          label="Dasa"
+          value={reading?.currentDasa?.lordName?.en || "—"}
+        />
       </div>
 
       {/* Reading sections */}
-      {i.general && (
-        <Section title="General Reading" text={i.general} />
-      )}
+      {i.general && <Section title="General Reading" text={i.general} />}
       <div className="grid md:grid-cols-2 gap-4">
         {i.career && <Section title="Career" text={i.career} />}
-        {i.relationships && <Section title="Relationships" text={i.relationships} />}
+        {i.relationships && (
+          <Section title="Relationships" text={i.relationships} />
+        )}
         {i.health && <Section title="Health" text={i.health} />}
         {i.finance && <Section title="Finance" text={i.finance} />}
       </div>
@@ -510,10 +570,15 @@ function OverviewTab({ reading, chart }: { reading: any; chart: any }) {
       <div className="grid md:grid-cols-2 gap-4">
         {reading.strengths?.length > 0 && (
           <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-lg p-4">
-            <h4 className="text-sm font-semibold text-emerald-400 mb-2">✨ Strengths</h4>
+            <h4 className="text-sm font-semibold text-emerald-400 mb-2">
+              ✨ Strengths
+            </h4>
             <ul className="space-y-1">
               {reading.strengths.slice(0, 4).map((s: string, i: number) => (
-                <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                <li
+                  key={i}
+                  className="text-sm text-muted-foreground flex items-start gap-2"
+                >
                   <span className="text-emerald-400 mt-0.5">•</span>
                   {s}
                 </li>
@@ -523,10 +588,15 @@ function OverviewTab({ reading, chart }: { reading: any; chart: any }) {
         )}
         {reading.challenges?.length > 0 && (
           <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-4">
-            <h4 className="text-sm font-semibold text-red-400 mb-2">⚠️ Challenges</h4>
+            <h4 className="text-sm font-semibold text-red-400 mb-2">
+              ⚠️ Challenges
+            </h4>
             <ul className="space-y-1">
               {reading.challenges.slice(0, 4).map((c: string, i: number) => (
-                <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                <li
+                  key={i}
+                  className="text-sm text-muted-foreground flex items-start gap-2"
+                >
                   <span className="text-red-400 mt-0.5">•</span>
                   {c}
                 </li>
@@ -557,12 +627,22 @@ function PlanetsTab({ reading, chart }: { reading: any; chart: any }) {
       {/* Panchamahapurusha Yogas */}
       {reading.panchamahapurushaYogas?.length > 0 && (
         <div>
-          <h4 className="text-sm font-semibold text-primary mb-3">🌟 Panchamahapurusha Yogas</h4>
+          <h4 className="text-sm font-semibold text-primary mb-3">
+            🌟 Panchamahapurusha Yogas
+          </h4>
           <div className="grid gap-3">
             {reading.panchamahapurushaYogas.map((y: any, i: number) => (
-              <div key={i} className="bg-primary/5 border border-primary/20 rounded-lg p-3">
-                <p className="font-medium text-sm">{y.name} <span className="text-muted-foreground">({y.planet})</span></p>
-                <p className="text-xs text-muted-foreground mt-1">{y.description}</p>
+              <div
+                key={i}
+                className="bg-primary/5 border border-primary/20 rounded-lg p-3"
+              >
+                <p className="font-medium text-sm">
+                  {y.name}{" "}
+                  <span className="text-muted-foreground">({y.planet})</span>
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {y.description}
+                </p>
               </div>
             ))}
           </div>
@@ -571,7 +651,9 @@ function PlanetsTab({ reading, chart }: { reading: any; chart: any }) {
 
       {/* Dignities */}
       <div>
-        <h4 className="text-sm font-semibold text-primary mb-3">Planetary Dignities</h4>
+        <h4 className="text-sm font-semibold text-primary mb-3">
+          Planetary Dignities
+        </h4>
         <div className="grid md:grid-cols-2 gap-2">
           {dignities.map((d: any, i: number) => (
             <motion.div
@@ -583,19 +665,29 @@ function PlanetsTab({ reading, chart }: { reading: any; chart: any }) {
             >
               <div className="flex items-center justify-between mb-1">
                 <span className="font-medium text-sm">{d.planet}</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${
-                  ["exalted", "moolatrikona", "own"].includes(d.dignity)
-                    ? "bg-emerald-500/10 text-emerald-400"
-                    : d.dignity === "debilitated"
-                    ? "bg-red-500/10 text-red-400"
-                    : "bg-yellow-500/10 text-yellow-400"
-                }`}>
+                <span
+                  className={`text-xs px-2 py-0.5 rounded-full ${
+                    ["exalted", "moolatrikona", "own"].includes(d.dignity)
+                      ? "bg-emerald-500/10 text-emerald-400"
+                      : d.dignity === "debilitated"
+                        ? "bg-red-500/10 text-red-400"
+                        : "bg-yellow-500/10 text-yellow-400"
+                  }`}
+                >
                   {d.dignity}
                 </span>
               </div>
               <p className="text-xs text-muted-foreground">{d.explanation}</p>
-              {d.isCombust && <p className="text-xs text-red-400 mt-1">🔥 Combust — weakened by Sun</p>}
-              {d.retrogradeEffect && <p className="text-xs text-yellow-400 mt-1">↩ {d.retrogradeEffect}</p>}
+              {d.isCombust && (
+                <p className="text-xs text-red-400 mt-1">
+                  🔥 Combust — weakened by Sun
+                </p>
+              )}
+              {d.retrogradeEffect && (
+                <p className="text-xs text-yellow-400 mt-1">
+                  ↩ {d.retrogradeEffect}
+                </p>
+              )}
             </motion.div>
           ))}
         </div>
@@ -604,10 +696,15 @@ function PlanetsTab({ reading, chart }: { reading: any; chart: any }) {
       {/* Aspects summary */}
       {reading.aspects?.summary?.length > 0 && (
         <div>
-          <h4 className="text-sm font-semibold text-primary mb-3">Planetary Aspects</h4>
+          <h4 className="text-sm font-semibold text-primary mb-3">
+            Planetary Aspects
+          </h4>
           <div className="space-y-1.5">
             {reading.aspects.summary.slice(0, 6).map((s: string, i: number) => (
-              <p key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+              <p
+                key={i}
+                className="text-sm text-muted-foreground flex items-start gap-2"
+              >
                 <span className="text-primary mt-1">•</span>
                 {s}
               </p>
@@ -622,13 +719,21 @@ function PlanetsTab({ reading, chart }: { reading: any; chart: any }) {
           <h4 className="text-sm font-semibold text-primary mb-3">Positions</h4>
           <div className="grid md:grid-cols-2 gap-2">
             {chart.planets.map((p: any, i: number) => (
-              <div key={i} className="bg-secondary/50 border border-border rounded-lg p-3">
+              <div
+                key={i}
+                className="bg-secondary/50 border border-border rounded-lg p-3"
+              >
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-sm">{p.name?.en} {p.isRetrograde && "↩"}</span>
-                  <span className="text-xs text-muted-foreground">House {p.house}</span>
+                  <span className="font-medium text-sm">
+                    {p.name?.en} {p.isRetrograde && "↩"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    House {p.house}
+                  </span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {ZODIAC_NAMES[p.sign]?.en || "—"} {p.signDegree?.toFixed(2)}° • {p.nakshatra}
+                  {ZODIAC_NAMES[p.sign]?.en || "—"} {p.signDegree?.toFixed(2)}°
+                  • {p.nakshatra}
                 </p>
               </div>
             ))}
@@ -649,7 +754,9 @@ function YogasTab({ reading }: { reading: any }) {
     >
       {reading.yogas?.length > 0 && (
         <div>
-          <h4 className="text-sm font-semibold text-primary mb-3">🌟 Beneficial Yogas</h4>
+          <h4 className="text-sm font-semibold text-primary mb-3">
+            🌟 Beneficial Yogas
+          </h4>
           <div className="grid gap-3">
             {reading.yogas.map((y: any, i: number) => (
               <motion.div
@@ -660,7 +767,9 @@ function YogasTab({ reading }: { reading: any }) {
                 className="bg-emerald-500/5 border border-emerald-500/20 rounded-lg p-4"
               >
                 <p className="font-medium text-sm text-emerald-400">{y.name}</p>
-                <p className="text-sm text-muted-foreground mt-1">{y.description}</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {y.description}
+                </p>
               </motion.div>
             ))}
           </div>
@@ -669,7 +778,9 @@ function YogasTab({ reading }: { reading: any }) {
 
       {reading.doshas?.length > 0 && (
         <div>
-          <h4 className="text-sm font-semibold text-red-400 mb-3">⚠️ Doshas (Afflictions)</h4>
+          <h4 className="text-sm font-semibold text-red-400 mb-3">
+            ⚠️ Doshas (Afflictions)
+          </h4>
           <div className="grid gap-3">
             {reading.doshas.map((d: any, i: number) => (
               <motion.div
@@ -681,11 +792,17 @@ function YogasTab({ reading }: { reading: any }) {
               >
                 <div className="flex items-center justify-between mb-1">
                   <p className="font-medium text-sm text-red-400">{d.name}</p>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    d.severity === "high" ? "bg-red-500/10 text-red-400" :
-                    d.severity === "medium" ? "bg-yellow-500/10 text-yellow-400" :
-                    "bg-emerald-500/10 text-emerald-400"
-                  }`}>{d.severity}</span>
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded-full ${
+                      d.severity === "high"
+                        ? "bg-red-500/10 text-red-400"
+                        : d.severity === "medium"
+                          ? "bg-yellow-500/10 text-yellow-400"
+                          : "bg-emerald-500/10 text-emerald-400"
+                    }`}
+                  >
+                    {d.severity}
+                  </span>
                 </div>
                 <p className="text-sm text-muted-foreground">{d.description}</p>
               </motion.div>
@@ -694,8 +811,10 @@ function YogasTab({ reading }: { reading: any }) {
         </div>
       )}
 
-      {(!reading.yogas?.length && !reading.doshas?.length) && (
-        <p className="text-sm text-muted-foreground">No yogas or doshas detected.</p>
+      {!reading.yogas?.length && !reading.doshas?.length && (
+        <p className="text-sm text-muted-foreground">
+          No yogas or doshas detected.
+        </p>
       )}
     </motion.div>
   );
@@ -704,7 +823,12 @@ function YogasTab({ reading }: { reading: any }) {
 // ─── Tab: Navamsa D9 ────────────────────────────────────────
 function NavamsaTab({ reading }: { reading: any }) {
   const n = reading.navamsa;
-  if (!n) return <p className="text-sm text-muted-foreground">No Navamsa data available.</p>;
+  if (!n)
+    return (
+      <p className="text-sm text-muted-foreground">
+        No Navamsa data available.
+      </p>
+    );
 
   return (
     <motion.div
@@ -713,16 +837,27 @@ function NavamsaTab({ reading }: { reading: any }) {
       className="space-y-6"
     >
       <div className="grid grid-cols-2 gap-2 md:gap-3">
-        <StatCard label="Navamsa Lagna" value={ZODIAC_NAMES[n.lagna]?.en || "—"} />
-        <StatCard label="Vargottama Planets" value={n.vargottamaPlanets?.join(", ") || "None"} />
+        <StatCard
+          label="Navamsa Lagna"
+          value={ZODIAC_NAMES[n.lagna]?.en || "—"}
+        />
+        <StatCard
+          label="Vargottama Planets"
+          value={n.vargottamaPlanets?.join(", ") || "None"}
+        />
       </div>
 
       {n.marriageAnalysis?.length > 0 && (
         <div>
-          <h4 className="text-sm font-semibold text-primary mb-3">Marriage Analysis</h4>
+          <h4 className="text-sm font-semibold text-primary mb-3">
+            Marriage Analysis
+          </h4>
           <div className="space-y-2">
             {n.marriageAnalysis.map((m: string, i: number) => (
-              <p key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+              <p
+                key={i}
+                className="text-sm text-muted-foreground flex items-start gap-2"
+              >
                 <span className="text-primary mt-1 shrink-0">•</span>
                 {m}
               </p>
@@ -733,12 +868,22 @@ function NavamsaTab({ reading }: { reading: any }) {
 
       {n.planetPlacements?.length > 0 && (
         <div>
-          <h4 className="text-sm font-semibold text-primary mb-3">Planets in D9</h4>
+          <h4 className="text-sm font-semibold text-primary mb-3">
+            Planets in D9
+          </h4>
           <div className="grid md:grid-cols-2 gap-2">
             {n.planetPlacements.map((p: any, i: number) => (
-              <div key={i} className="bg-secondary/50 border border-border rounded-lg p-3">
-                <p className="font-medium text-sm">{p.planet} <span className="text-muted-foreground">→ {p.sign}</span></p>
-                <p className="text-xs text-muted-foreground mt-1">{p.interpretation}</p>
+              <div
+                key={i}
+                className="bg-secondary/50 border border-border rounded-lg p-3"
+              >
+                <p className="font-medium text-sm">
+                  {p.planet}{" "}
+                  <span className="text-muted-foreground">→ {p.sign}</span>
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {p.interpretation}
+                </p>
               </div>
             ))}
           </div>
@@ -751,7 +896,12 @@ function NavamsaTab({ reading }: { reading: any }) {
 // ─── Tab: Remedies ──────────────────────────────────────────
 function RemediesTab({ reading }: { reading: any }) {
   const remedies = reading.remedies || [];
-  if (!remedies.length) return <p className="text-sm text-muted-foreground">No remedies data available.</p>;
+  if (!remedies.length)
+    return (
+      <p className="text-sm text-muted-foreground">
+        No remedies data available.
+      </p>
+    );
 
   return (
     <motion.div
@@ -769,9 +919,17 @@ function RemediesTab({ reading }: { reading: any }) {
         >
           <p className="font-medium text-sm text-primary mb-2">{r.planet}</p>
           <div className="space-y-1 text-xs text-muted-foreground">
-            <p><span className="text-foreground">Gem:</span> {r.gem || "None specific"}</p>
-            <p><span className="text-foreground">Mantra:</span> <code className="text-primary">{r.mantra}</code></p>
-            <p><span className="text-foreground">Action:</span> {r.action}</p>
+            <p>
+              <span className="text-foreground">Gem:</span>{" "}
+              {r.gem || "None specific"}
+            </p>
+            <p>
+              <span className="text-foreground">Mantra:</span>{" "}
+              <code className="text-primary">{r.mantra}</code>
+            </p>
+            <p>
+              <span className="text-foreground">Action:</span> {r.action}
+            </p>
           </div>
         </motion.div>
       ))}
@@ -793,7 +951,9 @@ function Section({ title, text }: { title: string; text: string }) {
   return (
     <div>
       <h4 className="text-sm font-semibold text-primary mb-2">{title}</h4>
-      <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{text}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+        {text}
+      </p>
     </div>
   );
 }
