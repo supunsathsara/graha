@@ -81,54 +81,20 @@ app.get("/health", (c) => {
   });
 });
 
-// ─── Root — serve frontend ─────────────────────────────
-app.get("/", async (c) => {
-  try {
-    const filePath = new URL("../public/index.html", import.meta.url).pathname;
-    const content = await fs.readFile(filePath);
-    return c.newResponse(content, 200, { "Content-Type": "text/html; charset=utf-8" });
-  } catch {
-    // Fallback: JSON if file isn't found
-    return c.json({
-      name: "Graha API",
-      description: "Vedic astrology API — visit / for the frontend",
-      version: "1.0.0",
-      docs: "/health",
-      endpoints: {
-        "POST /api/chart/compute": "Compute a birth chart",
-        "POST /api/prediction/interpret": "Full chart interpretation",
-      },
-    });
-  }
-});
-
-// ─── Static Files (public/) ────────────────────────────────
-const PUBLIC_DIR = new URL("../public/", import.meta.url).pathname;
-
-const MIME_TYPES: Record<string, string> = {
-  ".html": "text/html; charset=utf-8",
-  ".css": "text/css; charset=utf-8",
-  ".js": "application/javascript; charset=utf-8",
-  ".json": "application/json",
-  ".png": "image/png",
-  ".svg": "image/svg+xml",
-  ".ico": "image/x-icon",
-};
-
-app.get("/*", async (c) => {
-  const url = new URL(c.req.url);
-  const pathname = url.pathname === "/" ? "/index.html" : url.pathname;
-  if (pathname.startsWith("/api/")) return c.notFound();
-
-  try {
-    const filePath = join(PUBLIC_DIR, pathname);
-    const ext = extname(filePath);
-    const contentType = MIME_TYPES[ext] || "application/octet-stream";
-    const content = await fs.readFile(filePath);
-    return c.newResponse(content, 200, { "Content-Type": contentType });
-  } catch {
-    return c.notFound();
-  }
+// ─── Root ────────────────────────────────────────────────
+app.get("/", (c) => {
+  return c.json({
+    name: "Graha API",
+    version: "1.0.0",
+    description: "Vedic astrology engine — API endpoints at /api/*",
+    docs: "/health",
+    endpoints: {
+      "POST /api/chart/compute": "Compute a birth chart",
+      "POST /api/prediction/interpret": "Full chart reading + optional AI",
+      "POST /api/prediction/daily": "Daily prediction",
+      "POST /api/profile/create": "Create user profile",
+    },
+  });
 });
 
 // ─── Vercel Edge Handler ──────────────────────────────────
