@@ -53,7 +53,7 @@ export default function Home() {
           longitude: parseFloat(form.longitude),
           timezone: form.timezone,
           name: form.name || undefined,
-          aiMode: "off",
+          aiMode: "polish",
         }),
       });
       if (!res.ok) throw new Error("Failed to compute horoscope");
