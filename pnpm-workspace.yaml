@@ -1,0 +1,9 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+allowBuilds:
+  '0': esbuild
+  '1': swisseph
+  esbuild: true
+  sharp: true
+  swisseph: true

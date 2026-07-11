@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Graha — Vedic Horoscope</title>
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🌙 Graha</h1>
+      <p class="subtitle">Vedic Astrology Horoscope Engine</p>
+    </header>
+
+    <div class="layout">
+      <!-- FORM -->
+      <section class="card form-card">
+        <h2>Birth Details</h2>
+        <form id="birthForm">
+          <div class="field">
+            <label for="name">Name <span class="opt">(optional)</span></label>
+            <input type="text" id="name" placeholder="e.g. Kamal Perera" />
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="birthDate">Birth Date *</label>
+              <input type="date" id="birthDate" required />
+            </div>
+            <div class="field">
+              <label for="birthTime">Birth Time *</label>
+              <input type="time" id="birthTime" required />
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="latitude">Latitude *</label>
+              <input type="number" id="latitude" step="any" placeholder="e.g. 6.9271" required />
+              <span class="hint">e.g. Colombo: 6.9271</span>
+            </div>
+            <div class="field">
+              <label for="longitude">Longitude *</label>
+              <input type="number" id="longitude" step="any" placeholder="e.g. 79.8612" required />
+              <span class="hint">e.g. Colombo: 79.8612</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="timezone">Timezone</label>
+            <select id="timezone">
+              <option value="Asia/Colombo">Sri Lanka (Asia/Colombo, UTC+5:30)</option>
+              <option value="Asia/Kolkata">India (Asia/Kolkata, UTC+5:30)</option>
+              <option value="UTC">UTC</option>
+            </select>
+          </div>
+
+          <div class="preset-locations">
+            <span class="preset-label">Quick fill:</span>
+            <button type="button" class="preset-btn" data-lat="6.9271" data-lon="79.8612">Colombo</button>
+            <button type="button" class="preset-btn" data-lat="7.2906" data-lon="80.6337">Kandy</button>
+            <button type="button" class="preset-btn" data-lat="6.0535" data-lon="80.2210">Galle</button>
+            <button type="button" class="preset-btn" data-lat="9.6615" data-lon="80.0255">Jaffna</button>
+          </div>
+
+          <button type="submit" id="computeBtn" class="btn-primary">
+            <span class="btn-text">Compute Horoscope</span>
+            <span class="btn-spinner hidden">⟳</span>
+          </button>
+        </form>
+      </section>
+
+      <!-- RESULTS -->
+      <section class="card results-card" id="resultsCard" style="display:none">
+        <div class="results-header">
+          <h2>Your Horoscope</h2>
+          <span class="badge" id="aiBadge"></span>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs" id="tabs">
+          <button class="tab active" data-tab="overview">Overview</button>
+          <button class="tab" data-tab="planets">Planets</button>
+          <button class="tab" data-tab="houses">Houses</button>
+          <button class="tab" data-tab="yogas">Yogas & Doshas</button>
+          <button class="tab" data-tab="d9">Navamsa D9</button>
+          <button class="tab" data-tab="remedies">Remedies</button>
+        </div>
+
+        <!-- Tab: Overview -->
+        <div class="tab-content active" id="tab-overview">
+          <div id="overviewContent"></div>
+        </div>
+
+        <!-- Tab: Planets -->
+        <div class="tab-content" id="tab-planets">
+          <div id="planetsContent"></div>
+        </div>
+
+        <!-- Tab: Houses -->
+        <div class="tab-content" id="tab-houses">
+          <div id="housesContent"></div>
+        </div>
+
+        <!-- Tab: Yogas & Doshas -->
+        <div class="tab-content" id="tab-yogas">
+          <div id="yogasContent"></div>
+        </div>
+
+        <!-- Tab: Navamsa D9 -->
+        <div class="tab-content" id="tab-d9">
+          <div id="d9Content"></div>
+        </div>
+
+        <!-- Tab: Remedies -->
+        <div class="tab-content" id="tab-remedies">
+          <div id="remediesContent"></div>
+        </div>
+
+        <!-- Raw JSON toggle -->
+        <details class="raw-toggle">
+          <summary>Show raw API response</summary>
+          <pre id="rawResponse"></pre>
+        </details>
+      </section>
+
+      <!-- ERROR -->
+      <section class="card error-card" id="errorCard" style="display:none">
+        <h3>⚠️ Error</h3>
+        <p id="errorMessage"></p>
+      </section>
+    </div>
+
+    <footer>
+      <p>Graha — Vedic Astrology Engine. Based on classical Jyotish principles.</p>
+    </footer>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

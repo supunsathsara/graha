@@ -1,0 +1,17 @@
+{
+  "name": "@graha/shared",
+  "version": "1.0.0",
+  "description": "Shared types for Graha frontend and backend",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2"
+  }
+}
