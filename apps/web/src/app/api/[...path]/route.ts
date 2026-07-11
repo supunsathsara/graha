@@ -15,7 +15,7 @@ function getApiUrl(): string {
     const raw = process.env.VERCEL_RELATED_PROJECTS;
     if (raw) {
       const projects = JSON.parse(raw);
-      const apiProject = projects["prj_YOUR_API_PROJECT_ID"];
+      const apiProject = projects["prj_9rFRuW6H7TcXE59dTn8t6zg1ZgZy"];
       if (apiProject?.urls?.production) {
         return `https://${apiProject.urls.production}`;
       }
