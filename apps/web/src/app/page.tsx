@@ -20,6 +20,54 @@ import {
 } from "lucide-react";
 import { ZODIAC_NAMES } from "@graha/shared";
 
+const ZODIAC_SYMBOLS: Record<number, string> = {
+  0: "♈",
+  1: "♉",
+  2: "♊",
+  3: "♋",
+  4: "♌",
+  5: "♍",
+  6: "♎",
+  7: "♏",
+  8: "♐",
+  9: "♑",
+  10: "♒",
+  11: "♓",
+};
+
+const PLANET_SYMBOLS: Record<number, string> = {
+  0: "☉",
+  1: "☽",
+  2: "☿",
+  3: "♀",
+  4: "♂",
+  5: "♃",
+  6: "♄",
+  7: "♅",
+  8: "♆",
+  9: "♇",
+  10: "☊",
+  11: "☋",
+};
+
+const PLANET_IDS: Record<string, number> = {
+  sun: 0,
+  moon: 1,
+  mercury: 2,
+  venus: 3,
+  mars: 4,
+  jupiter: 5,
+  saturn: 6,
+  uranus: 7,
+  neptune: 8,
+  pluto: 9,
+  rahu: 10,
+  ketu: 11,
+};
+function getPlanetId(name: string): number {
+  return PLANET_IDS[name.toLowerCase()] ?? -1;
+}
+
 const SRI_LANKA_CITIES = [
   { name: "Colombo", lat: 6.9271, lon: 79.8612 },
   { name: "Kandy", lat: 7.2906, lon: 80.6337 },
@@ -438,16 +486,34 @@ export default function Home() {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="bg-card border border-border rounded-xl p-6 md:p-12 text-center"
+                  className="bg-card border border-border rounded-xl p-8 md:p-12 text-center"
                 >
-                  <Moon className="w-12 h-12 text-primary/40 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{
+                      duration: 20,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
+                    className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-primary/30 to-purple-500/30 flex items-center justify-center text-3xl"
+                  >
+                    <Sun className="w-8 h-8 text-primary" />
+                  </motion.div>
+                  <h3 className="text-xl font-semibold mb-3">
                     Your Horoscope Awaits
                   </h3>
-                  <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                  <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
                     Enter birth details to compute an accurate Vedic birth chart
-                    with planetary positions, yogas, doshas, and remedies.
+                    with planetary positions, yogas, doshas, and personalized
+                    remedies.
                   </p>
+                  <div className="flex items-center justify-center gap-2 md:gap-4 mt-6 text-xs text-muted-foreground">
+                    <span>📅 Date</span>
+                    <span className="text-border">→</span>
+                    <span>📍 Location</span>
+                    <span className="text-border">→</span>
+                    <span>🌟 Chart</span>
+                  </div>
                 </motion.div>
               )}
           </div>
@@ -542,7 +608,7 @@ function OverviewTab({ reading, chart }: { reading: any; chart: any }) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
         <StatCard
           label="Lagna"
-          value={ZODIAC_NAMES[chart?.lagna?.sign]?.en || "—"}
+          value={`${ZODIAC_SYMBOLS[chart?.lagna?.sign] || ""} ${ZODIAC_NAMES[chart?.lagna?.sign]?.en || "—"}`}
         />
         <StatCard
           label="Lagna Degree"
@@ -664,7 +730,9 @@ function PlanetsTab({ reading, chart }: { reading: any; chart: any }) {
               className="bg-secondary/50 border border-border rounded-lg p-3"
             >
               <div className="flex items-center justify-between mb-1">
-                <span className="font-medium text-sm">{d.planet}</span>
+                <span className="font-medium text-sm">
+                  {PLANET_SYMBOLS[getPlanetId(d.planet)] || ""} {d.planet}
+                </span>
                 <span
                   className={`text-xs px-2 py-0.5 rounded-full ${
                     ["exalted", "moolatrikona", "own"].includes(d.dignity)
@@ -725,7 +793,8 @@ function PlanetsTab({ reading, chart }: { reading: any; chart: any }) {
               >
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-sm">
-                    {p.name?.en} {p.isRetrograde && "↩"}
+                    {PLANET_SYMBOLS[p.planet] || ""} {p.name?.en}{" "}
+                    {p.isRetrograde && "↩"}
                   </span>
                   <span className="text-xs text-muted-foreground">
                     House {p.house}
@@ -839,7 +908,7 @@ function NavamsaTab({ reading }: { reading: any }) {
       <div className="grid grid-cols-2 gap-2 md:gap-3">
         <StatCard
           label="Navamsa Lagna"
-          value={ZODIAC_NAMES[n.lagna]?.en || "—"}
+          value={`${ZODIAC_SYMBOLS[n.lagna] || ""} ${ZODIAC_NAMES[n.lagna]?.en || "—"}`}
         />
         <StatCard
           label="Vargottama Planets"
