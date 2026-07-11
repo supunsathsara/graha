@@ -40,6 +40,11 @@ export default function Home() {
     timezone: "Asia/Colombo",
   });
   const [activeTab, setActiveTab] = useState<TabName>("overview");
+  const [locationQuery, setLocationQuery] = useState("");
+  const [locationResults, setLocationResults] = useState<Array<{display_name: string; lat: string; lon: string}>>([]);
+  const [searchingLocation, setSearchingLocation] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState("");
+  let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -124,6 +129,70 @@ export default function Home() {
                     placeholder="e.g. Kamal Perera"
                     className="w-full bg-background border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition"
                   />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-sm text-muted-foreground flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5" /> Birthplace
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={locationQuery}
+                      onChange={(e) => {
+                        const q = e.target.value;
+                        setLocationQuery(q);
+                        setSelectedLocation("");
+                        if (searchTimeout) clearTimeout(searchTimeout);
+                        if (q.length < 2) {
+                          setLocationResults([]);
+                          return;
+                        }
+                        searchTimeout = setTimeout(async () => {
+                          setSearchingLocation(true);
+                          try {
+                            const res = await fetch(
+                              `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=lk`
+                            );
+                            if (res.ok) {
+                              const data = await res.json();
+                              setLocationResults(data);
+                            }
+                          } catch {}
+                          setSearchingLocation(false);
+                        }, 400);
+                      }}
+                      placeholder="Search for a city (e.g. Colombo, Galle)"
+                      className="w-full bg-background border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition"
+                    />
+                    {searchingLocation && (
+                      <Loader2 className="w-4 h-4 animate-spin absolute right-3 top-2.5 text-muted-foreground" />
+                    )}
+                    {locationResults.length > 0 && (
+                      <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-card border border-border rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                        {locationResults.map((r, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => {
+                              setForm((f) => ({ ...f, latitude: r.lat, longitude: r.lon }));
+                              setLocationQuery(r.display_name.split(",")[0]);
+                              setSelectedLocation(r.display_name);
+                              setLocationResults([]);
+                            }}
+                            className="w-full text-left px-3 py-2 text-xs hover:bg-secondary/50 transition border-b border-border last:border-0"
+                          >
+                            {r.display_name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {selectedLocation && (
+                    <span className="text-xs text-muted-foreground">
+                      {form.latitude && form.longitude ? `${form.latitude}°N, ${form.longitude}°E` : ""}
+                    </span>
+                  )}
                 </div>
 
                 {/* Date & Time */}
