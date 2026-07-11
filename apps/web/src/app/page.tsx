@@ -519,6 +519,26 @@ export default function Home() {
           </div>
         </div>
       </main>
+      <footer className="border-t border-border/40 py-6 md:py-8">
+        <div className="container max-w-6xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-2">
+          <p className="text-xs text-muted-foreground">
+            Graha — Vedic Astrology Engine
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Made with{" "}
+            <span className="text-red-400">♥</span>{" "}
+            by{" "}
+            <a
+              href="https://supunsathsara.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline transition"
+            >
+              chutte
+            </a>
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
