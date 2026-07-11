@@ -28,6 +28,9 @@ const SRI_LANKA_CITIES = [
   { name: "Kurunegala", lat: 7.4861, lon: 80.3648 },
 ];
 
+// Simple Nominatim query cache to avoid duplicate requests
+const geocodeCache = new Map<string, Array<{display_name: string; lat: string; lon: string}>>();
+
 type TabName = "overview" | "planets" | "yogas" | "navamsa" | "remedies";
 
 export default function Home() {
@@ -144,23 +147,38 @@ export default function Home() {
                         setLocationQuery(q);
                         setSelectedLocation("");
                         if (searchTimeout) clearTimeout(searchTimeout);
-                        if (q.length < 2) {
+                        if (q.length < 3) {
                           setLocationResults([]);
                           return;
                         }
                         searchTimeout = setTimeout(async () => {
+                          // Check cache first
+                          const cached = geocodeCache.get(q);
+                          if (cached) {
+                            setLocationResults(cached);
+                            return;
+                          }
                           setSearchingLocation(true);
                           try {
                             const res = await fetch(
                               `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=lk`
                             );
-                            if (res.ok) {
-                              const data = await res.json();
-                              setLocationResults(data);
+                            if (!res.ok) {
+                              if (res.status === 429) {
+                                // Rate limited — retry after 3s
+                                setTimeout(() => {
+                                  setSearchingLocation(false);
+                                }, 3000);
+                                return;
+                              }
+                              return;
                             }
+                            const data = await res.json();
+                            geocodeCache.set(q, data);
+                            setLocationResults(data);
                           } catch {}
                           setSearchingLocation(false);
-                        }, 400);
+                        }, 1200);
                       }}
                       placeholder="Search for a city (e.g. Colombo, Galle)"
                       className="w-full bg-background border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition"
@@ -170,21 +188,25 @@ export default function Home() {
                     )}
                     {locationResults.length > 0 && (
                       <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-card border border-border rounded-lg shadow-xl max-h-48 overflow-y-auto">
-                        {locationResults.map((r, i) => (
+                        {locationResults.map((r, i) => {
+                          const shortName = r.display_name.split(",")[0];
+                          return (
                           <button
                             key={i}
                             type="button"
                             onClick={() => {
                               setForm((f) => ({ ...f, latitude: r.lat, longitude: r.lon }));
-                              setLocationQuery(r.display_name.split(",")[0]);
+                              setLocationQuery(shortName);
                               setSelectedLocation(r.display_name);
                               setLocationResults([]);
                             }}
                             className="w-full text-left px-3 py-2 text-xs hover:bg-secondary/50 transition border-b border-border last:border-0"
                           >
-                            {r.display_name}
+                            <span className="font-medium">{shortName}</span>
+                            <span className="block text-muted-foreground truncate">{r.display_name}</span>
                           </button>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </div>
