@@ -31,7 +31,7 @@ function getApiUrl(): string {
 }
 
 const TARGET = getApiUrl();
-const API_SECRET = proc**************CRET;
+const API_SECRET = process.env.API_SECRET;
 
 export async function GET(request: Request) {
   return proxy(request);
