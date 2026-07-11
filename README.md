@@ -170,15 +170,21 @@ In local development, leave `API_SECRET` blank to skip the check.
 
 ## Deployment
 
-Deploy as **two separate Vercel projects**:
+Deploy as **two separate Vercel projects** with the **monorepo root** as the root directory
+for both (so the lockfile at the root is found):
+
+> ⚠️ **Important:** In each project's Vercel dashboard, set the **Install Command** to `pnpm install`
+> so Vercel uses pnpm instead of npm. The root `vercel.json` also sets this.
 
 ### graha-api (Hono backend)
 
 | Setting | Value |
 |---|---|
-| Root directory | `apps/api` |
+| Root directory | `.` (monorepo root) |
 | Framework | Other |
-| Build | `pnpm build` |
+| Install command | `pnpm install` |
+| Build command | `cd apps/api && pnpm build` |
+| Output directory | `apps/api/dist` |
 
 Environment variables: `GROQ_API_KEY`, `DATABASE_URL`, `API_SECRET`
 
@@ -186,11 +192,13 @@ Environment variables: `GROQ_API_KEY`, `DATABASE_URL`, `API_SECRET`
 
 | Setting | Value |
 |---|---|
-| Root directory | `apps/web` |
+| Root directory | `.` (monorepo root) |
 | Framework | Next.js |
-| Build | `pnpm build` |
+| Install command | `pnpm install` |
+| Build command | `cd apps/web && pnpm build` |
+| Output directory | `apps/web/.next` |
 
-Environment variables: `API_URL` (the deployed API URL, e.g. `https://graha-api.vercel.app`), `API_SECRET` (same value as the API project)
+Environment variables: `API_URL` (deployed API URL, e.g. `https://graha-api.vercel.app`), `API_SECRET` (same value as API project)
 
 ## Database
 
