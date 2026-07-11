@@ -13,6 +13,7 @@ import { computeBirthChart, initEphemeris } from "../lib/ephemeris.js";
 import { getChartInterpretation, getDailyPrediction, initAI } from "../lib/ai.js";
 import { compileReading, readingToInterpretation } from "../lib/interpretations/index.js";
 import { generateId } from "../db/index.js";
+import { logChartComputation, logAIInteraction, logError } from "../lib/logger.js";
 
 const predictionRouter = new Hono();
 
@@ -53,6 +54,7 @@ const dailySchema = z.object({
 predictionRouter.post("/interpret", zValidator("json", interpretSchema), async (c) => {
   try {
     ensureInit();
+    const start = Date.now();
 
     const body = c.req.valid("json");
     const aiMode = body.aiMode || "polish"; // default: rule-based + AI polish
@@ -71,19 +73,29 @@ predictionRouter.post("/interpret", zValidator("json", interpretSchema), async (
     let interpretation = readingToInterpretation(reading);
 
     // Step 2: AI polish (optional) — improves language, does NOT change facts
+    let aiUsed = false;
     if (aiMode === "polish") {
       try {
+        const aiStart = Date.now();
         const aiInterpretation = await getChartInterpretation(chart, body.provider || "auto");
         // Only use AI for the general text and formatting;
         // keep the rule-based specific fields (career, relationships, health, etc.)
         if (aiInterpretation.general && aiInterpretation.general.length > 10) {
           interpretation.general = aiInterpretation.general;
+          aiUsed = true;
         }
+        logAIInteraction(body.provider || "groq", "polish", Date.now() - aiStart, true).catch(() => {});
         // AI can enhance descriptions but not override calculated data
       } catch {
+        logAIInteraction(body.provider || "groq", "polish", 0, false).catch(() => {});
         // AI polish failed — use pure rule-based result
       }
     }
+
+    logChartComputation(
+      body.birthDate, body.birthTime, body.latitude, body.longitude,
+      Date.now() - start, { aiMode, aiUsed }
+    ).catch(() => {});
 
     return c.json({
       success: true,
@@ -91,7 +103,6 @@ predictionRouter.post("/interpret", zValidator("json", interpretSchema), async (
       chart,
       reading: {
         interpretation,
-        // Detailed breakdowns
         houseInfluences: reading.houseInfluences,
         yogas: reading.yogas,
         doshas: reading.doshas,
@@ -104,10 +115,11 @@ predictionRouter.post("/interpret", zValidator("json", interpretSchema), async (
         planetaryDignities: reading.planetaryDignities,
         panchamahapurushaYogas: reading.panchamahapurushaYogas,
       },
-      ai: aiMode !== "off" ? !!process.env.GROQ_API_KEY : false,
+      ai: aiUsed,
     });
   } catch (error) {
     console.error("[Prediction] Interpret error:", error);
+    logError("Interpretation failed", error).catch(() => {});
     return c.json(
       {
         success: false,

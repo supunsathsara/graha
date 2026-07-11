@@ -31,6 +31,7 @@ import { secureHeaders } from "hono/secure-headers";
 import { chartRouter } from "./routes/chart.js";
 import { predictionRouter } from "./routes/prediction.js";
 import { profileRouter } from "./routes/profile.js";
+import { logRequest, logError } from "./lib/logger.js";
 
 // ─── App ───────────────────────────────────────────────────
 const app = new Hono({ strict: false });
@@ -61,6 +62,17 @@ app.use("*", cors({
 }));
 app.use("*", logger());
 app.use("*", secureHeaders());
+
+// ─── Axiom Request Logging ─────────────────────────────────
+app.use("*", async (c, next) => {
+  const start = Date.now();
+  await next();
+  const duration = Date.now() - start;
+  if (c.req.path === "/health") return;
+  if (c.res) {
+    logRequest(c.req.method, c.req.path, c.res.status, duration).catch(() => {});
+  }
+});
 
 // ─── Routes ────────────────────────────────────────────────
 app.route("/api/chart", chartRouter);

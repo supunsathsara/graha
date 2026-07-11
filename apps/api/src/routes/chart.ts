@@ -9,6 +9,7 @@ import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
 import { computeBirthChart, initEphemeris } from "../lib/ephemeris.js";
 import { generateId } from "../db/index.js";
+import { logChartComputation, logError } from "../lib/logger.js";
 
 const chartRouter = new Hono();
 
@@ -33,27 +34,26 @@ const chartRequestSchema = z.object({
 
 // ─── POST /compute ─────────────────────────────────────────
 chartRouter.post("/compute", zValidator("json", chartRequestSchema), async (c) => {
+  const start = Date.now();
   try {
     ensureEphemeris();
 
     const body = c.req.valid("json");
     const chart = computeBirthChart(body);
-
-    // Generate an ID for this chart
     const chartId = generateId();
 
-    return c.json({
-      success: true,
-      chartId,
-      data: chart,
-    });
+    logChartComputation(
+      body.birthDate, body.birthTime, body.latitude, body.longitude,
+      Date.now() - start,
+      { chartId }
+    ).catch(() => {});
+
+    return c.json({ success: true, chartId, data: chart });
   } catch (error) {
     console.error("[Chart] Compute error:", error);
+    logError("Chart computation failed", error).catch(() => {});
     return c.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : "Failed to compute chart",
-      },
+      { success: false, error: error instanceof Error ? error.message : "Failed to compute chart" },
       500
     );
   }
