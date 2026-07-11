@@ -1,0 +1,11 @@
+{
+  "functions": {
+    "apps/api/src/index.ts": {
+      "runtime": "@vercel/edge@1.1.1",
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/apps/api/src/index.ts" }
+  ]
+}

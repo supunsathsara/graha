@@ -20,8 +20,6 @@ import {
 } from "lucide-react";
 import { ZODIAC_NAMES } from "@graha/shared";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-
 const SRI_LANKA_CITIES = [
   { name: "Colombo", lat: 6.9271, lon: 79.8612 },
   { name: "Kandy", lat: 7.2906, lon: 80.6337 },
@@ -45,7 +43,7 @@ export default function Home() {
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`${API_URL}/api/prediction/interpret`, {
+      const res = await fetch(`/api/prediction/interpret`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
