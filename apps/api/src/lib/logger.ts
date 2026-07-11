@@ -2,25 +2,42 @@
  * Axiom logging client.
  *
  * Sends structured logs to the "lagna" dataset.
- * Configured via AXIOM_TOKEN environment variable.
- * Gracefully degrades when the token is not set (no logs sent).
+ * Configired via AXIOM_TOKEN environment variable.
+ * Uses dynamic import so the build doesn't fail if the package is unavailable.
  */
-import { Axiom } from "@axiomhq/js";
 
-let client: Axiom | null = null;
+type AxiomClient = {
+  ingest: (dataset: string, data: Record<string, unknown>) => void;
+  flush: () => void;
+};
 
-function getClient(): Axiom | null {
+let client: AxiomClient | null = null;
+let initializing = false;
+
+async function getClient(): Promise<AxiomClient | null> {
   if (client) return client;
+  if (initializing) return null;
+
   const token = process.env.AXIOM_TOKEN;
   if (!token) {
     console.debug("[Logger] AXIOM_TOKEN not set — logs will not be sent to Axiom");
+    client = null;
     return null;
   }
-  client = new Axiom({
-    token,
-    orgId: undefined, // inferred from token
-  });
-  return client;
+
+  initializing = true;
+  try {
+    const { Axiom } = await import("@axiomhq/js");
+    const ax = new Axiom({ token });
+    client = ax;
+    return client;
+  } catch (err) {
+    console.debug("[Logger] Failed to initialize Axiom client:", err);
+    client = null;
+    return null;
+  } finally {
+    initializing = false;
+  }
 }
 
 export type LogEvent = {
@@ -36,7 +53,7 @@ export type LogEvent = {
   chartId?: string;
   aiProvider?: string;
   aiMode?: string;
-  requestBody?: Record<string, unknown>;
+  environment?: string;
   [key: string]: unknown;
 };
 
@@ -55,21 +72,12 @@ export async function logRequest(
   duration: number,
   extras?: Partial<LogEvent>
 ): Promise<void> {
-  const ax = getClient();
-  if (!ax) return;
   try {
-    await ax.ingest("lagna", {
-      ...baseEvent("request"),
-      method,
-      path,
-      status,
-      duration,
-      ...extras,
-    });
+    const ax = await getClient();
+    if (!ax) return;
+    await ax.ingest("lagna", { ...baseEvent("request"), method, path, status, duration, ...extras });
     await ax.flush();
-  } catch (err) {
-    console.debug("[Logger] Failed to send request log:", err);
-  }
+  } catch {}
 }
 
 export async function logChartComputation(
@@ -80,22 +88,12 @@ export async function logChartComputation(
   duration: number,
   extras?: Partial<LogEvent>
 ): Promise<void> {
-  const ax = getClient();
-  if (!ax) return;
   try {
-    await ax.ingest("lagna", {
-      ...baseEvent("chart"),
-      birthDate,
-      birthTime,
-      latitude,
-      longitude,
-      duration,
-      ...extras,
-    });
+    const ax = await getClient();
+    if (!ax) return;
+    await ax.ingest("lagna", { ...baseEvent("chart"), birthDate, birthTime, latitude, longitude, duration, ...extras });
     await ax.flush();
-  } catch (err) {
-    console.debug("[Logger] Failed to send chart log:", err);
-  }
+  } catch {}
 }
 
 export async function logAIInteraction(
@@ -105,21 +103,12 @@ export async function logAIInteraction(
   success: boolean,
   extras?: Partial<LogEvent>
 ): Promise<void> {
-  const ax = getClient();
-  if (!ax) return;
   try {
-    await ax.ingest("lagna", {
-      ...baseEvent("ai"),
-      aiProvider: provider,
-      aiMode: mode,
-      duration,
-      success,
-      ...extras,
-    });
+    const ax = await getClient();
+    if (!ax) return;
+    await ax.ingest("lagna", { ...baseEvent("ai"), aiProvider: provider, aiMode: mode, duration, success, ...extras });
     await ax.flush();
-  } catch (err) {
-    console.debug("[Logger] Failed to send AI log:", err);
-  }
+  } catch {}
 }
 
 export async function logError(
@@ -127,35 +116,22 @@ export async function logError(
   error?: unknown,
   extras?: Partial<LogEvent>
 ): Promise<void> {
-  const ax = getClient();
-  if (!ax) return;
   try {
-    await ax.ingest("lagna", {
-      ...baseEvent("error"),
-      message,
-      error: error instanceof Error ? error.message : String(error),
-      ...extras,
-    });
+    const ax = await getClient();
+    if (!ax) return;
+    await ax.ingest("lagna", { ...baseEvent("error"), message, error: error instanceof Error ? error.message : String(error), ...extras });
     await ax.flush();
-  } catch (err) {
-    console.debug("[Logger] Failed to send error log:", err);
-  }
+  } catch {}
 }
 
 export async function logCustomEvent(
   event: string,
   data?: Record<string, unknown>
 ): Promise<void> {
-  const ax = getClient();
-  if (!ax) return;
   try {
-    await ax.ingest("lagna", {
-      ...baseEvent("event"),
-      event,
-      ...data,
-    });
+    const ax = await getClient();
+    if (!ax) return;
+    await ax.ingest("lagna", { ...baseEvent("event"), event, ...data });
     await ax.flush();
-  } catch (err) {
-    console.debug("[Logger] Failed to send event log:", err);
-  }
+  } catch {}
 }
