@@ -151,9 +151,18 @@ export default function Home() {
               <Stars className="w-3 h-3 md:w-4 md:h-4" />
               <span>Vedic Astrology Engine</span>
             </div>
-            <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight mb-3 md:mb-4 bg-gradient-to-r from-primary via-purple-300 to-primary bg-clip-text text-transparent">
-              Graha
-            </h1>
+            <div className="flex items-center justify-center gap-4 mb-2 md:mb-3">
+              <img
+                src="/icon"
+                alt="Graha"
+                width={48}
+                height={48}
+                className="md:w-14 md:h-14 rounded-xl"
+              />
+              <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight bg-gradient-to-r from-primary via-purple-300 to-primary bg-clip-text text-transparent">
+                Graha
+              </h1>
+            </div>
             <p className="text-sm sm:text-base md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed px-2">
               Accurate birth chart calculations powered by Swiss Ephemeris.
               Sidereal Vedic astrology with planetary dignities, yogas, doshas,
