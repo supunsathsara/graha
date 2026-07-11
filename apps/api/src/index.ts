@@ -36,10 +36,27 @@ import { profileRouter } from "./routes/profile.js";
 const app = new Hono({ strict: false });
 
 // ─── Middleware ────────────────────────────────────────────
+// ─── Auth Middleware ────────────────────────────────────────
+const API_SECRET = process.env.API_SECRET;
+
+app.use("*", async (c, next) => {
+  // Skip auth check for health endpoint
+  if (c.req.path === "/health") return next();
+
+  // If API_SECRET is set, validate the X-Graha-Secret header
+  if (API_SECRET) {
+    const clientSecret = c.req.header("X-Graha-Secret");
+    if (!clientSecret || clientSecret !== API_SECRET) {
+      return c.json({ success: false, error: "Unauthorized" }, 401);
+    }
+  }
+  await next();
+});
+
 app.use("*", cors({
   origin: ["http://localhost:3000", "http://localhost:5173", "https://*.vercel.app"],
   allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowHeaders: ["Content-Type", "Authorization"],
+  allowHeaders: ["Content-Type", "Authorization", "X-Graha-Secret"],
   credentials: true,
 }));
 app.use("*", logger());
