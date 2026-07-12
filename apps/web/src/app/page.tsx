@@ -19,6 +19,7 @@ import {
   Gem,
 } from "lucide-react";
 import { ZODIAC_NAMES } from "@graha/shared";
+import { RasiChart, RasiChartPreview } from "@/components/rasi-chart";
 
 const ZODIAC_SYMBOLS: Record<number, string> = {
   0: "♈",
@@ -138,37 +139,15 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-[#0a0a1a]">
       {/* Hero */}
-      <header className="relative overflow-hidden border-b border-border/40">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent" />
-        <div className="container max-w-6xl mx-auto px-4 py-8 md:py-16 relative">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center"
-          >
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs md:text-sm mb-4 md:mb-6">
-              <Stars className="w-3 h-3 md:w-4 md:h-4" />
-              <span>Vedic Astrology Engine</span>
+      <header className="border-b border-border/40">
+        <div className="container max-w-6xl mx-auto px-4 py-6 md:py-10">
+          <div className="flex items-center gap-3">
+            <img src="/icon" alt="Graha" width={32} height={32} className="rounded-lg" />
+            <div>
+              <h1 className="font-display text-xl md:text-2xl font-semibold text-foreground tracking-tight">Graha</h1>
+              <p className="font-mono text-[11px] text-muted-foreground tracking-widest uppercase">sidereal · Lahiri</p>
             </div>
-            <div className="flex items-center justify-center gap-4 mb-2 md:mb-3">
-              <img
-                src="/icon"
-                alt="Graha"
-                width={48}
-                height={48}
-                className="md:w-14 md:h-14 rounded-xl"
-              />
-              <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight bg-gradient-to-r from-primary via-purple-300 to-primary bg-clip-text text-transparent">
-                Graha
-              </h1>
-            </div>
-            <p className="text-sm sm:text-base md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed px-2">
-              Accurate birth chart calculations powered by Swiss Ephemeris.
-              Sidereal Vedic astrology with planetary dignities, yogas, doshas,
-              and remedies.
-            </p>
-          </motion.div>
+          </div>
         </div>
       </header>
 
@@ -307,10 +286,11 @@ export default function Home() {
                 {/* Date & Time */}
                 <div className="grid grid-cols-2 gap-2 md:gap-3">
                   <div className="space-y-1.5">
-                    <label className="text-sm text-muted-foreground flex items-center gap-1.5">
+                    <label htmlFor="birthDate" className="text-sm text-muted-foreground flex items-center gap-1.5">
                       <Calendar className="w-3.5 h-3.5" /> Birth Date
                     </label>
                     <input
+                      id="birthDate"
                       type="date"
                       value={form.birthDate}
                       onChange={(e) =>
@@ -321,10 +301,11 @@ export default function Home() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-sm text-muted-foreground flex items-center gap-1.5">
+                    <label htmlFor="birthTime" className="text-sm text-muted-foreground flex items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5" /> Birth Time
                     </label>
                     <input
+                      id="birthTime"
                       type="time"
                       value={form.birthTime}
                       onChange={(e) =>
@@ -422,7 +403,7 @@ export default function Home() {
                   ) : (
                     <>
                       <Sparkles className="w-4 h-4" />
-                      Compute Horoscope
+                      Compute chart
                     </>
                   )}
                 </button>
@@ -495,33 +476,22 @@ export default function Home() {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="bg-card border border-border rounded-xl p-8 md:p-12 text-center"
+                  className="bg-card border border-border rounded-xl p-6 md:p-8"
                 >
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{
-                      duration: 20,
-                      repeat: Infinity,
-                      ease: "linear",
-                    }}
-                    className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-primary/30 to-purple-500/30 flex items-center justify-center text-3xl"
-                  >
-                    <Sun className="w-8 h-8 text-primary" />
-                  </motion.div>
-                  <h3 className="text-xl font-semibold mb-3">
-                    Your Horoscope Awaits
-                  </h3>
-                  <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-                    Enter birth details to compute an accurate Vedic birth chart
-                    with planetary positions, yogas, doshas, and personalized
-                    remedies.
-                  </p>
-                  <div className="flex items-center justify-center gap-2 md:gap-4 mt-6 text-xs text-muted-foreground">
-                    <span>📅 Date</span>
-                    <span className="text-border">→</span>
-                    <span>📍 Location</span>
-                    <span className="text-border">→</span>
-                    <span>🌟 Chart</span>
+                  <div className="flex flex-col lg:flex-row items-center gap-6">
+                    <RasiChartPreview className="shrink-0" />
+                    <div>
+                      <p className="text-sm text-muted-foreground leading-relaxed max-w-sm">
+                        Enter a birth date, time, and place to generate a Rasi chart, dasa timeline, and remedies.
+                      </p>
+                      <div className="flex items-center gap-3 mt-4 text-xs text-muted-foreground">
+                        <span>📅</span>
+                        <span className="text-border">—</span>
+                        <span>📍</span>
+                        <span className="text-border">—</span>
+                        <span>🌟 Chart</span>
+                      </div>
+                    </div>
                   </div>
                 </motion.div>
               )}
@@ -575,15 +545,21 @@ function ChartResults({
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden">
       {/* Chart header */}
-      <div className="p-6 pb-4 border-b border-border">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold">
+      <div className="p-4 md:p-6 border-b border-border">
+        <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-start">
+          <div className="shrink-0">
+            <RasiChart
+              lagnaSign={chart?.lagna?.sign ?? 0}
+              planets={chart?.planets}
+              className="mx-auto md:mx-0"
+            />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3 className="font-display text-lg font-semibold">
               {chart?.name || "Birth Chart"}
             </h3>
-            <p className="text-sm text-muted-foreground">
-              {chart?.birthDate} at {chart?.birthTime} •{" "}
-              {ZODIAC_NAMES[chart?.lagna?.sign]?.en || "—"} Lagna
+            <p className="text-sm text-muted-foreground mt-1 font-mono text-[13px]">
+              {chart?.birthDate} · {chart?.birthTime} · {ZODIAC_NAMES[chart?.lagna?.sign]?.en || "—"} Lagna
             </p>
           </div>
         </div>

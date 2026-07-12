@@ -1,9 +1,23 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Fraunces, Manrope, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-display",
+  weight: ["500", "600"],
+});
+
+const manrope = Manrope({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -34,14 +48,7 @@ export const metadata: Metadata = {
     title: "Graha — Vedic Horoscope Engine",
     description:
       "Accurate Vedic astrology calculations powered by Swiss Ephemeris. Get your complete birth chart with planetary positions, yogas, doshas, and remedies.",
-    images: [
-      {
-        url: "/opengraph-image",
-        width: 1200,
-        height: 630,
-        alt: "Graha — Vedic Horoscope Engine",
-      },
-    ],
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "Graha — Vedic Horoscope Engine" }],
   },
   twitter: {
     card: "summary_large_image",
@@ -50,24 +57,14 @@ export const metadata: Metadata = {
       "Accurate Vedic astrology calculations powered by Swiss Ephemeris. Get your complete birth chart with planetary positions, yogas, doshas, and remedies.",
     images: ["/opengraph-image"],
   },
-  robots: {
-    index: true,
-    follow: true,
-  },
-  icons: {
-    icon: "/icon",
-    apple: "/icon",
-  },
+  robots: { index: true, follow: true },
+  icons: { icon: "/icon", apple: "/icon" },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${fraunces.variable} ${manrope.variable} ${jetbrainsMono.variable} font-sans`}>
         <Providers>{children}</Providers>
       </body>
     </html>

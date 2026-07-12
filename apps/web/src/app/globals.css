@@ -4,26 +4,31 @@
 
 @layer base {
   :root {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 5.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 5.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 263 70% 75%;
+    --night: 248 47% 10%;
+    --manuscript: 247 35% 14%;
+    --turmeric: 39 75% 56%;
+    --sindoor: 7 56% 52%;
+    --tulsi: 103 20% 52%;
+    --ola-leaf: 42 42% 90%;
+    --ash: 40 12% 55%;
+
+    --background: var(--night);
+    --foreground: var(--ola-leaf);
+    --card: var(--manuscript);
+    --card-foreground: var(--ola-leaf);
+    --primary: var(--turmeric);
     --primary-foreground: 0 0% 0%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 263 70% 75%;
-    --accent-foreground: 0 0% 0%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 25.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 263 70% 75%;
-    --radius: 0.75rem;
+    --secondary: 248 30% 18%;
+    --secondary-foreground: var(--ola-leaf);
+    --muted: 248 30% 18%;
+    --muted-foreground: var(--ash);
+    --destructive: var(--sindoor);
+    --destructive-foreground: var(--ola-leaf);
+    --success: var(--tulsi);
+    --border: 248 25% 22%;
+    --input: 248 30% 16%;
+    --ring: var(--turmeric);
+    --radius: 0.5rem;
   }
 }
 
@@ -32,23 +37,27 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+  /* Tabular numbers for data */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 }
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: hsl(var(--background));
+  background: hsl(var(--night));
 }
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted));
-  border-radius: 4px;
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground));
+  background: hsl(var(--muted-foreground) / 0.5);
 }
 
 /* Hide scrollbar for mobile tabs */
