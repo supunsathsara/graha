@@ -32,6 +32,7 @@ import { chartRouter } from "./routes/chart.js";
 import { predictionRouter } from "./routes/prediction.js";
 import { profileRouter } from "./routes/profile.js";
 import { logRequest, logError } from "./lib/logger.js";
+import { rateLimit } from "./lib/ratelimit.js";
 
 // ─── App ───────────────────────────────────────────────────
 const app = new Hono({ strict: false });
@@ -53,6 +54,9 @@ app.use("*", async (c, next) => {
   }
   await next();
 });
+
+// ─── Rate Limiting ───────────────────────────────────────────
+app.use("*", rateLimit);
 
 app.use("*", cors({
   origin: ["http://localhost:3000", "http://localhost:5173", "https://*.vercel.app"],

@@ -2,13 +2,16 @@
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["**/.env.*local"],
   "globalEnv": [
-    "GROQ_API_KEY",
-    "HF_TOKEN",
-    "DATABASE_URL",
     "API_SECRET",
     "API_URL",
-    "VERCEL_RELATED_PROJECTS",
-    "NODE_ENV"
+    "AXIOM_TOKEN",
+    "DATABASE_URL",
+    "GROQ_API_KEY",
+    "HF_TOKEN",
+    "NODE_ENV",
+    "UPSTASH_REDIS_REST_URL",
+    "UPSTASH_REDIS_REST_TOKEN",
+    "VERCEL_RELATED_PROJECTS"
   ],
   "tasks": {
     "build": {

@@ -94,6 +94,9 @@ cp apps/web/.env.example apps/web/.env.local  # or create manually
 | `HF_TOKEN` | No | Hugging Face token (fallback AI) |
 | `DATABASE_URL` | No | Neon PostgreSQL connection string |
 | `API_SECRET` | No | Shared secret for API auth (leave blank in dev) |
+| `AXIOM_TOKEN` | No | Axiom API token for structured logging |
+| `UPSTASH_REDIS_REST_URL` | No | Upstash Redis REST URL for rate limiting |
+| `UPSTASH_REDIS_REST_TOKEN` | No | Upstash Redis REST token for rate limiting |
 
 **`apps/web/.env.local`** (for the frontend proxy):
 
@@ -178,6 +181,10 @@ dependencies from the root `pnpm-lock.yaml`.
 
 #### graha-api (Hono backend)
 
+> **Note:** The API uses Swiss Ephemeris — a native C++ addon. It must run on
+> **Node.js Serverless Functions** (not Edge Runtime). Vercel's Node.js runtime
+> supports native addons compiled via node-gyp.
+
 | Setting | Value |
 |---|---|
 | **Root Directory** | `apps/api` |
@@ -196,24 +203,14 @@ Environment variables: `GROQ_API_KEY`, `DATABASE_URL`, `API_SECRET`
 | **Build Command** | `pnpm build` |
 | **Output Directory** | `.next` |
 
-Environment variables: `API_URL` (set to the deployed API URL, e.g. `https://graha-api.vercel.app`)
+#### Related Projects (auto-link preview environments)
 
-The Next.js app has a proxy route that forwards `/api/*` requests to the API URL.
-No CORS issues — the frontend calls its own domain (`/api/...`), and the proxy
-forwards to the API project internally.
+In the web project's Vercel dashboard, the `apps/web/vercel.json` config sets
+the Related Projects to the API project. Vercel automatically injects the API URL
+as the `VERCEL_RELATED_PROJECTS` environment variable so preview deployments
+always point to the correct API preview.
 
-### Single Vercel project (simpler, everything on one domain)
-
-| Setting | Value |
-|---|---|
-| **Root Directory** | (empty) |
-| **Framework Preset** | Other |
-| **Build Command** | Override → `cd apps/web && pnpm build` |
-| **Output Directory** | Override → `apps/web/.next` |
-| **Install Command** | Override → `pnpm install` |
-
-This approach requires the root `vercel.json` with `functions` and `rewrites` to route
-`/api/*` to the Hono Edge Function.
+Environment variables for **graha-web**: `API_SECRET` (same value as API project)
 
 ## Database
 
