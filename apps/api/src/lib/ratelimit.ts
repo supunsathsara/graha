@@ -79,13 +79,7 @@ export async function rateLimit(
   const identifier = getIdentifier(c);
 
   try {
-    const { success, remaining, reset, pending } =
-      await limiter.limit(identifier);
-
-    // Ensure analytics flush completes in serverless environment
-    if (c.executionCtx && typeof c.executionCtx.waitUntil === "function") {
-      c.executionCtx.waitUntil(pending);
-    }
+    const { success, remaining, reset } = await limiter.limit(identifier);
 
     c.header("X-RateLimit-Remaining", String(remaining));
     c.header("X-RateLimit-Reset", String(reset));
