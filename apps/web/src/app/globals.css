@@ -45,6 +45,42 @@
   }
 }
 
+@layer utilities {
+  .instrument-border {
+    border: 1px solid hsl(var(--ash));
+  }
+  .instrument-border-turmeric {
+    border: 2px solid hsl(var(--turmeric));
+  }
+
+  .south-indian-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border: 1px solid hsl(var(--ash));
+  }
+  .chart-cell {
+    border: 1px solid hsl(var(--ash));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    position: relative;
+  }
+  .chart-center {
+    grid-column: 2 / 4;
+    grid-row: 2 / 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: hsla(var(--manuscript), 0.5);
+    border: 1px solid hsl(var(--ash));
+  }
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 6px;

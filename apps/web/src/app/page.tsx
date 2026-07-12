@@ -137,35 +137,25 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-[#0a0a1a]">
-      {/* Hero */}
-      <header className="border-b border-border/40">
-        <div className="container max-w-6xl mx-auto px-4 py-6 md:py-10">
-          <div className="flex items-center gap-3">
-            <img src="/icon" alt="Graha" width={32} height={32} className="rounded-lg" />
-            <div>
-              <h1 className="font-display text-xl md:text-2xl font-semibold text-foreground tracking-tight">Graha</h1>
-              <p className="font-mono text-[11px] text-muted-foreground tracking-widest uppercase">sidereal · Lahiri</p>
-            </div>
-          </div>
+    <div className="flex flex-col min-h-screen bg-night text-ola-leaf overflow-x-hidden">
+      {/* Header */}
+      <header className="h-20 border-b border-ash/30 flex items-center justify-between px-8 bg-night/80 backdrop-blur-md sticky top-0 z-50">
+        <div className="flex items-center gap-4">
+          <span className="font-display text-3xl font-semibold text-turmeric tracking-tight">Graha</span>
+          <div className="h-6 w-[1px] bg-ash/30 mx-2"></div>
+          <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-ash hidden md:inline">Vedic Precision Instrument</span>
         </div>
       </header>
 
-      <main className="container max-w-6xl mx-auto px-4 py-4 md:py-8 -mt-6 md:-mt-8 relative z-10">
-        <div className="grid lg:grid-cols-[400px_1fr] gap-4 md:gap-6 items-start">
-          {/* Form */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <div className="bg-card border border-border rounded-xl p-4 md:p-6 space-y-4 md:space-y-5">
-              <h2 className="text-lg font-semibold flex items-center gap-2">
-                <Sun className="w-5 h-5 text-primary" />
-                Birth Details
-              </h2>
+      <main className="flex-1 flex flex-col lg:flex-row">
+        {/* LEFT COLUMN: Birth Details */}
+        <aside className="w-full lg:w-[400px] border-r border-ash/30 p-4 md:p-8 flex flex-col gap-8 bg-manuscript/40">
+          <div className="flex flex-col gap-2">
+            <h2 className="font-display text-2xl font-medium text-ola-leaf">Native Details</h2>
+            <p className="font-sans text-sm text-ash leading-relaxed">Required parameters for sidereal calculation using Lahiri Ayanamsa.</p>
+          </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Name */}
                 <div className="space-y-1.5">
                   <label className="text-sm text-muted-foreground flex items-center gap-1.5">
@@ -393,7 +383,7 @@ export default function Home() {
                 <button
                   type="submit"
                   disabled={mutation.isPending}
-                  className="w-full py-3 rounded-lg bg-primary text-primary-foreground font-semibold hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full bg-turmeric text-night font-mono text-[11px] uppercase font-bold tracking-[0.2em] py-5 px-6 flex items-center justify-center gap-3 hover:brightness-110 active:scale-[0.99] transition-all"
                 >
                   {mutation.isPending ? (
                     <>
@@ -408,11 +398,47 @@ export default function Home() {
                   )}
                 </button>
               </form>
-            </div>
-          </motion.div>
+        </aside>
 
-          {/* Results */}
-          <div className="space-y-4">
+        {/* RIGHT COLUMN: Visualization & Analysis */}
+        <section className="flex-1 p-4 md:p-8 flex flex-col gap-8 bg-night">
+          {/* Hero State: Rasi Chart */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start" id="analysis-dashboard">
+            <div className="w-full max-w-[500px] mx-auto lg:mx-0 relative">
+              <div className="flex items-center justify-between mb-4 border-b border-ash/20 pb-2">
+                <span className="font-display text-lg text-turmeric">D1 Rasi Chart</span>
+                <span className="font-mono text-[10px] text-ash">SIDEREAL</span>
+              </div>
+              {mutation.data ? (
+                <RasiChart
+                  lagnaSign={mutation.data.chart.lagna?.sign ?? 0}
+                  planets={mutation.data.chart.planets}
+                  showEmpty={true}
+                />
+              ) : (
+                <RasiChartPreview />
+              )}
+            </div>
+            
+            {/* Quick Data / Empty State */}
+            <div className="w-full flex flex-col gap-6">
+              <div className="flex flex-col gap-2 border-b border-ash/20 pb-4">
+                <h3 className="font-display text-xl text-ola-leaf">Instrument Reading</h3>
+                {!mutation.data ? (
+                  <p className="font-sans text-sm text-ash leading-relaxed">
+                    Enter a birth date, time, and place to generate a Rasi chart, dasa timeline, and remedies.
+                  </p>
+                ) : (
+                  <p className="font-sans text-sm text-ash leading-relaxed">
+                    Calculations complete. Navigating results.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Results Details */}
+          <div className="space-y-4 md:space-y-6 ">
             {/* Error */}
             <AnimatePresence>
               {mutation.isError && (
@@ -469,36 +495,11 @@ export default function Home() {
               )}
             </AnimatePresence>
 
-            {/* Empty state */}
-            {!mutation.isPending &&
-              !mutation.isSuccess &&
-              !mutation.isError && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="bg-card border border-border rounded-xl p-6 md:p-8"
-                >
-                  <div className="flex flex-col lg:flex-row items-center gap-6">
-                    <RasiChartPreview className="shrink-0" />
-                    <div>
-                      <p className="text-sm text-muted-foreground leading-relaxed max-w-sm">
-                        Enter a birth date, time, and place to generate a Rasi chart, dasa timeline, and remedies.
-                      </p>
-                      <div className="flex items-center gap-3 mt-4 text-xs text-muted-foreground">
-                        <span>📅</span>
-                        <span className="text-border">—</span>
-                        <span>📍</span>
-                        <span className="text-border">—</span>
-                        <span>🌟 Chart</span>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
+
           </div>
-        </div>
+        </section>
       </main>
-      <footer className="border-t border-border/40 py-6 md:py-8">
+      <footer className="border-t border-ash/20 mt-8 py-8 text-center text-ash font-sans text-sm">
         <div className="container max-w-6xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-2">
           <p className="text-xs text-muted-foreground">
             Graha — Vedic Astrology Engine
@@ -547,13 +548,7 @@ function ChartResults({
       {/* Chart header */}
       <div className="p-4 md:p-6 border-b border-border">
         <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-start">
-          <div className="shrink-0">
-            <RasiChart
-              lagnaSign={chart?.lagna?.sign ?? 0}
-              planets={chart?.planets}
-              className="mx-auto md:mx-0"
-            />
-          </div>
+
           <div className="min-w-0 flex-1">
             <h3 className="font-display text-lg font-semibold">
               {chart?.name || "Birth Chart"}
