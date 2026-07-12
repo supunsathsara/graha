@@ -3,35 +3,51 @@
  */
 import type { Context, Next } from "hono";
 
-let ratelimiter: any = null;
+let defaultLimiter: any = null;
+let chartLimiter: any = null;
+let initialized = false;
 
 async function init() {
-  if (ratelimiter !== null) return;
+  if (initialized) return;
+  initialized = true;
 
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const tokenKey = "UPSTASH_REDIS_REST_TOKEN";
-  const token = process.env[tokenKey];
-
-  if (!url || !token) {
-    console.debug("[RateLimit] UPSTASH_REDIS_REST_URL/TOKEN not set — rate limiting disabled");
-    ratelimiter = false;
+  if (
+    !process.env.UPSTASH_REDIS_REST_URL ||
+    !process.env.UPSTASH_REDIS_REST_TOKEN
+  ) {
+    console.debug(
+      "[RateLimit] UPSTASH_REDIS_REST_URL/TOKEN not set — rate limiting disabled",
+    );
     return;
   }
 
   try {
     const { Ratelimit } = await import("@upstash/ratelimit");
     const { Redis } = await import("@upstash/redis");
-    const redis = new Redis({ url, token });
-    ratelimiter = new Ratelimit({
+
+    const redis = Redis.fromEnv();
+
+    // General API: 10 requests per minute
+    defaultLimiter = new Ratelimit({
       redis,
       limiter: Ratelimit.slidingWindow(10, "1 m"),
       analytics: true,
-      prefix: "graha",
+      prefix: "@graha:ratelimit:default",
+      timeout: 3000,
     });
+
+    // Chart computation: 20 requests per minute (heavier endpoint)
+    chartLimiter = new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(20, "1 m"),
+      analytics: true,
+      prefix: "@graha:ratelimit:chart",
+      timeout: 3000,
+    });
+
     console.debug("[RateLimit] Upstash Redis initialized");
   } catch (err) {
     console.debug("[RateLimit] Failed to initialize:", err);
-    ratelimiter = false;
   }
 }
 
@@ -41,19 +57,35 @@ function getIdentifier(c: Context): string {
   if (forwarded) return forwarded.split(",")[0].trim();
   const secret = h("x-graha-secret");
   if (secret) return `secret:${secret}`;
-  return h("cf-connecting-ip") || "unknown";
+  return h("cf-connecting-ip") || h("x-real-ip") || "unknown";
 }
 
-export async function rateLimit(c: Context, next: Next): Promise<Response | void> {
+function getLimiter(path: string) {
+  if (path.startsWith("/api/chart/compute")) return chartLimiter;
+  return defaultLimiter;
+}
+
+export async function rateLimit(
+  c: Context,
+  next: Next,
+): Promise<Response | void> {
   if (c.req.path === "/health") return next();
 
   await init();
-  if (!ratelimiter) return next();
+
+  const limiter = getLimiter(c.req.path);
+  if (!limiter) return next();
 
   const identifier = getIdentifier(c);
 
   try {
-    const { success, remaining, reset } = await ratelimiter.limit(identifier);
+    const { success, remaining, reset, pending } =
+      await limiter.limit(identifier);
+
+    // Ensure analytics flush completes in serverless environment
+    if (c.executionCtx && typeof c.executionCtx.waitUntil === "function") {
+      c.executionCtx.waitUntil(pending);
+    }
 
     c.header("X-RateLimit-Remaining", String(remaining));
     c.header("X-RateLimit-Reset", String(reset));
@@ -62,8 +94,12 @@ export async function rateLimit(c: Context, next: Next): Promise<Response | void
       const retryAfter = Math.ceil((reset - Date.now()) / 1000);
       c.header("Retry-After", String(retryAfter));
       return c.json(
-        { success: false, error: "Too many requests. Please try again.", retryAfter },
-        429
+        {
+          success: false,
+          error: "Too many requests. Please try again.",
+          retryAfter,
+        },
+        429,
       );
     }
 
