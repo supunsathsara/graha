@@ -207,7 +207,7 @@ export interface NavamsaData {
   lagna: number;
   vargottamaPlanets: string[];
   marriageAnalysis: string[];
-  planetPlacements: { planet: string; sign: string; interpretation: string }[];
+  planetPlacements: { planet: string; planetId?: number; sign: string; signId?: number; interpretation: string }[];
 }
 
 export interface AspectData {

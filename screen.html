@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600&amp;family=jetbrainsMono:wght@100..900&amp;family=manrope:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "night": "#120E24",
+                        "manuscript": "#1C1730",
+                        "turmeric": "#E3A23D",
+                        "sindoor": "#C9503F",
+                        "tulsi": "#7A9B6E",
+                        "ola-leaf": "#F2E9D8",
+                        "ash": "#9C927E",
+                        "primary": "#E3A23D",
+                        "on-primary": "#120E24",
+                        "background": "#120E24",
+                        "surface": "#1C1730",
+                        "on-surface": "#F2E9D8",
+                        "on-surface-variant": "#9C927E",
+                        "outline": "#9C927E",
+                        "outline-variant": "#3A344A"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0px",
+                        "lg": "0px",
+                        "xl": "0px",
+                        "full": "0px"
+                    },
+                    spacing: {
+                        "unit": "4px",
+                        "max-width": "1280px",
+                        "margin-desktop": "32px",
+                        "gutter": "16px",
+                        "margin-mobile": "16px"
+                    },
+                    fontFamily: {
+                        "body": ["manrope", "sans-serif"],
+                        "display": ["Fraunces", "serif"],
+                        "data": ["jetbrainsMono", "monospace"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'manrope', sans-serif; background-color: #120E24; color: #F2E9D8; }
+        .font-display { font-family: 'Fraunces', serif; }
+        .font-data { font-family: 'jetbrainsMono', monospace; }
+        
+        /* Instrument-like sharp borders */
+        .instrument-border { border: 1px solid #9C927E; }
+        .instrument-border-turmeric { border: 2px solid #E3A23D; }
+        
+        /* South Indian Chart Grid */
+        .south-indian-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            border: 1px solid #9C927E;
+        }
+        .chart-cell {
+            border: 1px solid #9C927E;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+            position: relative;
+        }
+        .chart-center {
+            grid-column: 2 / 4;
+            grid-row: 2 / 4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(28, 23, 48, 0.5);
+            border: 1px solid #9C927E;
+        }
+
+        @keyframes dash { to { stroke-dashoffset: 0; } }
+        
+        /* Custom scrollbar for manuscript feel */
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #120E24; }
+        ::-webkit-scrollbar-thumb { background: #E3A23D; }
+    </style>
+</head>
+<body class="bg-night text-ola-leaf overflow-x-hidden">
+<!-- Shader Canvas Background -->
+<canvas class="fixed inset-0 w-full h-full z-[-1] pointer-events-none" id="shader-bg"></canvas>
+<div class="flex flex-col min-h-screen">
+<!-- Header -->
+<header class="h-20 border-b border-ash/30 flex items-center justify-between px-margin-desktop bg-night/80 backdrop-blur-md sticky top-0 z-50">
+<div class="flex items-center gap-4">
+<span class="font-display text-3xl font-semibold text-turmeric tracking-tight">Graha</span>
+<div class="h-6 w-[1px] bg-ash/30 mx-2"></div>
+<span class="font-data text-[10px] uppercase tracking-[0.2em] text-ash">Vedic Precision Instrument</span>
+</div>
+<div class="flex items-center gap-8">
+<nav class="hidden md:flex items-center gap-6">
+<a class="font-data text-[11px] uppercase tracking-widest text-turmeric border-b border-turmeric pb-1" href="#">Calculator</a>
+<a class="font-data text-[11px] uppercase tracking-widest text-ash hover:text-ola-leaf transition-colors pb-1" href="#">Ephemeris</a>
+<a class="font-data text-[11px] uppercase tracking-widest text-ash hover:text-ola-leaf transition-colors pb-1" href="#">Config</a>
+</nav>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-ash cursor-pointer hover:text-turmeric">search</span>
+<span class="material-symbols-outlined text-ash cursor-pointer hover:text-turmeric">help_outline</span>
+</div>
+</div>
+</header>
+<main class="flex-1 flex flex-col lg:flex-row">
+<!-- LEFT COLUMN: Birth Details -->
+<aside class="w-full lg:w-[400px] border-r border-ash/30 p-margin-desktop flex flex-col gap-8 bg-manuscript/40">
+<div class="flex flex-col gap-2">
+<h2 class="font-display text-2xl font-medium text-ola-leaf">Native Details</h2>
+<p class="font-body text-sm text-ash leading-relaxed">Required parameters for sidereal calculation using Lahiri Ayanamsa.</p>
+</div>
+<form class="flex flex-col gap-6" id="calc-form">
+<!-- Name -->
+<div class="flex flex-col gap-2">
+<label class="font-data text-[10px] uppercase tracking-widest text-ash" for="native-name">Native Name</label>
+<input class="bg-night/50 border border-ash/30 text-ola-leaf font-body p-3 focus:outline-none focus:border-turmeric transition-colors placeholder:text-ash/30" id="native-name" placeholder="e.g. Ananda" type="text"/>
+</div>
+<!-- Location -->
+<div class="flex flex-col gap-2">
+<label class="font-data text-[10px] uppercase tracking-widest text-ash" for="birth-place">Location</label>
+<div class="relative">
+<input class="w-full bg-night/50 border border-ash/30 text-ola-leaf font-body p-3 pr-10 focus:outline-none focus:border-turmeric transition-colors placeholder:text-ash/30" id="birth-place" placeholder="Search city..." type="text"/>
+<span class="material-symbols-outlined absolute right-3 top-3 text-ash text-[20px]">location_on</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<!-- Date -->
+<div class="flex flex-col gap-2">
+<label class="font-data text-[10px] uppercase tracking-widest text-ash" for="birth-date">Date</label>
+<input class="bg-night/50 border border-ash/30 text-ola-leaf font-data text-sm p-3 focus:outline-none focus:border-turmeric transition-colors [color-scheme:dark]" id="birth-date" type="date"/>
+</div>
+<!-- Time -->
+<div class="flex flex-col gap-2">
+<label class="font-data text-[10px] uppercase tracking-widest text-ash" for="birth-time">Time</label>
+<input class="bg-night/50 border border-ash/30 text-ola-leaf font-data text-sm p-3 focus:outline-none focus:border-turmeric transition-colors [color-scheme:dark]" id="birth-time" type="time"/>
+</div>
+</div>
+<!-- Advanced / Coordinates -->
+<div class="flex flex-col gap-4">
+<button class="flex items-center gap-2 text-ash hover:text-turmeric transition-colors w-fit group" id="adv-toggle" type="button">
+<span class="material-symbols-outlined text-[18px] transition-transform duration-300" id="adv-icon">expand_more</span>
+<span class="font-data text-[10px] uppercase tracking-widest">Manual Coordinates</span>
+</button>
+<div class="hidden grid-cols-2 gap-4 bg-night/30 p-4 border border-ash/20" id="adv-panel">
+<div class="flex flex-col gap-1">
+<label class="text-[9px] text-ash uppercase">Latitude</label>
+<input class="bg-transparent border-b border-ash/30 text-ola-leaf font-data text-xs py-1 w-full focus:outline-none focus:border-turmeric" type="text" value="25.3176° N"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="text-[9px] text-ash uppercase">Longitude</label>
+<input class="bg-transparent border-b border-ash/30 text-ola-leaf font-data text-xs py-1 w-full focus:outline-none focus:border-turmeric" type="text" value="82.9739° E"/>
+</div>
+</div>
+</div>
+<button class="bg-turmeric text-night font-data text-[11px] uppercase font-bold tracking-[0.2em] py-5 px-6 flex items-center justify-center gap-3 hover:brightness-110 active:scale-[0.99] transition-all group" id="compute-btn" type="button">
+<span class="material-symbols-outlined text-[18px]">adjust</span>
+                    Compute Chart
+                </button>
+</form>
+<div class="mt-auto pt-8 border-t border-ash/10">
+<span class="font-data text-[10px] uppercase tracking-widest text-ash block mb-4">Calculation Logs</span>
+<div class="flex flex-col gap-3">
+<div class="flex items-center justify-between text-ash/60 font-data text-[10px] p-2 border border-ash/10 hover:border-ash/30 cursor-pointer transition-all">
+<span>PREV_001_KASHI</span>
+<span>14.11.1992</span>
+</div>
+<div class="flex items-center justify-between text-ash/60 font-data text-[10px] p-2 border border-ash/10 hover:border-ash/30 cursor-pointer transition-all">
+<span>PREV_002_DELHI</span>
+<span>03.04.1988</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- RIGHT COLUMN: Visualization & Analysis -->
+<section class="flex-1 p-margin-desktop flex flex-col gap-8 bg-night">
+<!-- Hero State: Rasi Chart -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start" id="analysis-dashboard">
+<!-- South Indian Rasi Chart Container -->
+<div class="w-full max-w-[500px] mx-auto lg:mx-0 relative">
+<div class="flex items-center justify-between mb-4 border-b border-ash/20 pb-2">
+<span class="font-display text-lg text-turmeric">D1 Rasi Chart</span>
+<span class="font-data text-[10px] text-ash">ASHWINI · MESHA</span>
+</div>
+<div class="relative instrument-border bg-manuscript/20 p-2 shadow-2xl">
+<div class="south-indian-grid">
+<!-- Cell 12: Pisces -->
+<div class="chart-cell"><span class="absolute top-1 left-1 font-data text-[9px] text-ash">12</span><span class="text-turmeric font-data text-sm">Ra</span></div>
+<!-- Cell 1: Aries (LAGNA - Example) -->
+<div class="chart-cell instrument-border-turmeric"><span class="absolute top-1 left-1 font-data text-[9px] text-turmeric">1</span><span class="text-turmeric font-data text-sm font-bold">Ma<br/>As</span></div>
+<!-- Cell 2: Taurus -->
+<div class="chart-cell"><span class="absolute top-1 left-1 font-data text-[9px] text-ash">2</span><span class="text-turmeric font-data text-sm">Ve</span></div>
+<!-- Cell 3: Gemini -->
+<div class="chart-cell"><span class="absolute top-1 left-1 font-data text-[9px] text-ash">3</span></div>
+<!-- Cell 11: Aquarius -->
+<div class="chart-cell"><span class="absolute top-1 left-1 font-data text-[9px] text-ash">11</span></div>
+<!-- Center Space -->
+<div class="chart-center">
+<div class="relative w-[80%] h-[80%] border border-ash/30 flex items-center justify-center">
+<svg class="absolute inset-0 w-full h-full text-ash/20" viewbox="0 0 100 100">
+<line stroke="currentColor" stroke-width="0.5" x1="0" x2="100" y1="0" y2="100"></line>
+<line stroke="currentColor" stroke-width="0.5" x1="100" x2="0" y1="0" y2="100"></line>
+<polygon fill="none" points="50,0 100,50 50,100 0,50" stroke="currentColor" stroke-width="0.5"></polygon>
+</svg>
+<div class="text-center">
+<div class="font-display text-xs text-ash uppercase tracking-widest">Sidereal</div>
+<div class="font-data text-[10px] text-ash/50 mt-1">Lahiri Ayanamsa</div>
+</div>
+</div>
+</div>
+<!-- Cell 4: Cancer -->
+<div class="chart-cell"><span class="absolute top-1 left-1 font-data text-[9px] text-ash">4</span><span class="text-turmeric font-data text-sm">Mo</span></div>
+<!-- Cell 10: Capricorn -->
+<div class="chart-cell"><span class="absolute top-1 left-1 font-data text-[9px] text-ash">10</span><span class="text-turmeric font-data text-sm">Sa</span></div>
+<!-- Cell 5: Leo -->
+<div class="chart-cell"><span class="absolute top-1 left-1 font-data text-[9px] text-ash">5</span></div>
+<!-- Cell 9: Sagittarius -->
+<div class="chart-cell"><span class="absolute top-1 left-1 font-data text-[9px] text-ash">9</span><span class="text-turmeric font-data text-sm">Ju</span></div>
+<!-- Cell 8: Scorpio -->
+<div class="chart-cell"><span class="absolute top-1 left-1 font-data text-[9px] text-ash">8</span><span class="text-turmeric font-data text-sm">Ke</span></div>
+<!-- Cell 7: Libra -->
+<div class="chart-cell"><span class="absolute top-1 left-1 font-data text-[9px] text-ash">7</span><span class="text-turmeric font-data text-sm">Su Me</span></div>
+<!-- Cell 6: Virgo -->
+<div class="chart-cell"><span class="absolute top-1 left-1 font-data text-[9px] text-ash">6</span></div>
+</div>
+</div>
+</div>
+<!-- Quick Data Table -->
+<div class="w-full flex flex-col gap-6">
+<div class="flex flex-col gap-2 border-b border-ash/20 pb-4">
+<h3 class="font-display text-xl text-ola-leaf">Instrument Reading</h3>
+<p class="font-body text-sm text-ash leading-relaxed" id="empty-state">Enter a birth date, time, and place to generate a Rasi chart, dasa timeline, and remedies.</p>
+</div>
+<div class="instrument-border bg-manuscript/20 overflow-hidden">
+<table class="w-full text-left font-data text-xs border-collapse">
+<thead>
+<tr class="bg-night border-b border-ash/20">
+<th class="p-3 text-ash uppercase tracking-widest font-normal">Graha</th>
+<th class="p-3 text-ash uppercase tracking-widest font-normal">Longitude</th>
+<th class="p-3 text-ash uppercase tracking-widest font-normal">Nakshatra</th>
+<th class="p-3 text-ash uppercase tracking-widest font-normal text-right">Dignity</th>
+</tr>
+</thead>
+<tbody class="text-ola-leaf/80">
+<tr class="border-b border-ash/10 hover:bg-manuscript/40 transition-colors">
+<td class="p-3 text-turmeric">Sun ☉</td>
+<td class="p-3">193° 14' 22"</td>
+<td class="p-3">Swati (3)</td>
+<td class="p-3 text-right text-sindoor">Debilitated</td>
+</tr>
+<tr class="border-b border-ash/10 hover:bg-manuscript/40 transition-colors">
+<td class="p-3 text-turmeric">Moon ☽</td>
+<td class="p-3">115° 08' 41"</td>
+<td class="p-3">Ashlesha (2)</td>
+<td class="p-3 text-right text-ola-leaf">Average</td>
+</tr>
+<tr class="border-b border-ash/10 hover:bg-manuscript/40 transition-colors">
+<td class="p-3 text-turmeric">Mars ♂</td>
+<td class="p-3">014° 22' 09"</td>
+<td class="p-3">Ashwini (1)</td>
+<td class="p-3 text-right text-tulsi">Own House</td>
+</tr>
+<tr class="border-b border-ash/10 hover:bg-manuscript/40 transition-colors">
+<td class="p-3 text-turmeric">Saturn ♄</td>
+<td class="p-3">288° 45' 12"</td>
+<td class="p-3">Shravana (2)</td>
+<td class="p-3 text-right text-tulsi">Exalted</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- Analysis Tabs Area -->
+<div class="flex-1 flex flex-col instrument-border bg-manuscript/10">
+<nav class="flex border-b border-ash/20 bg-night">
+<button class="px-8 py-4 font-data text-[10px] uppercase tracking-widest text-turmeric border-r border-ash/20 bg-manuscript/30">Overview</button>
+<button class="px-8 py-4 font-data text-[10px] uppercase tracking-widest text-ash border-r border-ash/20 hover:text-ola-leaf transition-colors">Yogas</button>
+<button class="px-8 py-4 font-data text-[10px] uppercase tracking-widest text-ash border-r border-ash/20 hover:text-ola-leaf transition-colors">Navamsa</button>
+<button class="px-8 py-4 font-data text-[10px] uppercase tracking-widest text-ash border-r border-ash/20 hover:text-ola-leaf transition-colors">Dasa</button>
+<button class="px-8 py-4 font-data text-[10px] uppercase tracking-widest text-ash border-r border-ash/20 hover:text-ola-leaf transition-colors">Remedies</button>
+</nav>
+<div class="p-8">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+<div class="flex flex-col gap-6">
+<div class="flex flex-col gap-2">
+<h4 class="font-display text-lg text-ola-leaf">Key Observations</h4>
+<div class="h-[1px] w-12 bg-turmeric mb-2"></div>
+<p class="font-body text-sm text-ash leading-relaxed">
+                                    The placement of <span class="text-turmeric">Saturn</span> in the 10th house indicates strong karmic focus on career and public reputation. <span class="text-sindoor">Sun's debilitation</span> in the 7th house suggests potential challenges in equal partnerships or legal contracts.
+                                </p>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="bg-manuscript border border-ash/20 px-3 py-1 font-data text-[9px] uppercase text-tulsi">Ruchaka Yoga</span>
+<span class="bg-manuscript border border-ash/20 px-3 py-1 font-data text-[9px] uppercase text-sindoor">Kuja Dosha</span>
+<span class="bg-manuscript border border-ash/20 px-3 py-1 font-data text-[9px] uppercase text-ola-leaf">Sasa Yoga</span>
+</div>
+</div>
+<div class="flex flex-col gap-4">
+<h4 class="font-display text-lg text-ola-leaf">Ashtakavarga Strength</h4>
+<div class="space-y-4">
+<div class="flex flex-col gap-1">
+<div class="flex justify-between font-data text-[10px] uppercase text-ash">
+<span>Dharma Trikona</span>
+<span>32 Points</span>
+</div>
+<div class="h-1 bg-ash/10 w-full"><div class="h-full bg-turmeric w-[80%]"></div></div>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex justify-between font-data text-[10px] uppercase text-ash">
+<span>Artha Trikona</span>
+<span>28 Points</span>
+</div>
+<div class="h-1 bg-ash/10 w-full"><div class="h-full bg-turmeric w-[70%]"></div></div>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex justify-between font-data text-[10px] uppercase text-ash">
+<span>Kama Trikona</span>
+<span>24 Points</span>
+</div>
+<div class="h-1 bg-ash/10 w-full"><div class="h-full bg-turmeric w-[60%]"></div></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<footer class="h-12 border-t border-ash/10 bg-night flex items-center justify-between px-margin-desktop">
+<span class="font-data text-[9px] uppercase tracking-widest text-ash/40">Sidereal Ephemeris Engine v4.2.0</span>
+<div class="flex items-center gap-6">
+<span class="font-data text-[9px] uppercase tracking-widest text-ash/40">Status: Calibration Stable</span>
+<span class="font-data text-[9px] uppercase tracking-widest text-ash/40">Ayanamsa: 24° 10' 32" (Lahiri)</span>
+</div>
+</footer>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const computeBtn = document.getElementById('compute-btn');
+        const advToggle = document.getElementById('adv-toggle');
+        const advPanel = document.getElementById('adv-panel');
+        const advIcon = document.getElementById('adv-icon');
+
+        // Advanced toggle
+        advToggle.addEventListener('click', () => {
+            const isHidden = advPanel.classList.toggle('hidden');
+            advIcon.textContent = isHidden ? 'expand_more' : 'expand_less';
+        });
+
+        // Compute Chart Mock Action
+        computeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const originalHtml = computeBtn.innerHTML;
+            computeBtn.innerHTML = `<span class="material-symbols-outlined text-[18px] animate-spin">refresh</span> Processing Calibration...`;
+            computeBtn.classList.add('opacity-80', 'pointer-events-none');
+
+            setTimeout(() => {
+                computeBtn.innerHTML = originalHtml;
+                computeBtn.classList.remove('opacity-80', 'pointer-events-none');
+                // Could trigger a visual refresh animation here
+            }, 1200);
+        });
+
+        // WebGL Shader setup (Simplified atmospheric pulse)
+        const canvas = document.getElementById('shader-bg');
+        const gl = canvas.getContext('webgl');
+        if (gl) {
+            const vsSource = `attribute vec2 p; void main() { gl_Position = vec4(p, 0.0, 1.0); }`;
+            const fsSource = `
+                precision mediump float;
+                uniform float t;
+                uniform vec2 r;
+                void main() {
+                    vec2 uv = gl_FragCoord.xy / r;
+                    float pulse = sin(uv.x * 3.0 + t * 0.2) * cos(uv.y * 3.0 + t * 0.3) * 0.5 + 0.5;
+                    vec3 night = vec3(0.07, 0.055, 0.14);
+                    vec3 manuscript = vec3(0.11, 0.09, 0.19);
+                    gl_FragColor = vec4(mix(night, manuscript, pulse * 0.15), 1.0);
+                }
+            `;
+
+            function createShader(gl, type, source) {
+                const s = gl.createShader(type);
+                gl.shaderSource(s, source);
+                gl.compileShader(s);
+                return s;
+            }
+
+            const program = gl.createProgram();
+            gl.attachShader(program, createShader(gl, gl.VERTEX_SHADER, vsSource));
+            gl.attachShader(program, createShader(gl, gl.FRAGMENT_SHADER, fsSource));
+            gl.linkProgram(program);
+            gl.useProgram(program);
+
+            const buffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), gl.STATIC_DRAW);
+
+            const pLoc = gl.getAttribLocation(program, "p");
+            gl.enableVertexAttribArray(pLoc);
+            gl.vertexAttribPointer(pLoc, 2, gl.FLOAT, false, 0, 0);
+
+            const tLoc = gl.getUniformLocation(program, "t");
+            const rLoc = gl.getUniformLocation(program, "r");
+
+            function render(time) {
+                if (canvas.width !== window.innerWidth || canvas.height !== window.innerHeight) {
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
+                    gl.viewport(0, 0, canvas.width, canvas.height);
+                }
+                gl.uniform1f(tLoc, time * 0.001);
+                gl.uniform2f(rLoc, canvas.width, canvas.height);
+                gl.drawArrays(gl.TRIANGLES, 0, 6);
+                requestAnimationFrame(render);
+            }
+            requestAnimationFrame(render);
+        }
+    });
+</script>
+</body></html>

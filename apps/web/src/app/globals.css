@@ -1,3 +1,5 @@
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -12,95 +14,54 @@
     --ola-leaf: 42 42% 90%;
     --ash: 40 12% 55%;
 
+    --radius: 0.5rem;
+    --font-display: var(--font-display);
+    --font-sans: var(--font-sans);
+    --font-mono: var(--font-mono);
+  }
+
+  .dark {
     --background: var(--night);
     --foreground: var(--ola-leaf);
     --card: var(--manuscript);
     --card-foreground: var(--ola-leaf);
+    --popover: var(--manuscript);
+    --popover-foreground: var(--ola-leaf);
     --primary: var(--turmeric);
     --primary-foreground: 0 0% 0%;
     --secondary: 248 30% 18%;
     --secondary-foreground: var(--ola-leaf);
     --muted: 248 30% 18%;
     --muted-foreground: var(--ash);
+    --accent: 248 30% 18%;
+    --accent-foreground: var(--ola-leaf);
     --destructive: var(--sindoor);
     --destructive-foreground: var(--ola-leaf);
     --success: var(--tulsi);
     --border: 248 25% 22%;
     --input: 248 30% 16%;
     --ring: var(--turmeric);
-    --radius: 0.5rem;
   }
-}
 
-@layer base {
   * {
-    @apply border-border;
+    @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }
-  /* Tabular numbers for data */
-  .tabular-nums {
-    font-variant-numeric: tabular-nums;
+  html {
+    @apply font-sans;
   }
 }
 
-@layer utilities {
-  .instrument-border {
-    border: 1px solid hsl(var(--ash));
-  }
-  .instrument-border-turmeric {
-    border: 2px solid hsl(var(--turmeric));
-  }
-
-  .south-indian-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(4, 1fr);
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    border: 1px solid hsl(var(--ash));
-  }
-  .chart-cell {
-    border: 1px solid hsl(var(--ash));
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 4px;
-    position: relative;
-  }
-  .chart-center {
-    grid-column: 2 / 4;
-    grid-row: 2 / 4;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: hsla(var(--manuscript), 0.5);
-    border: 1px solid hsl(var(--ash));
-  }
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }
 
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: hsl(var(--night));
-}
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.3);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.5);
-}
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: hsl(var(--night)); }
+::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground) / 0.3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.5); }
 
-/* Hide scrollbar for mobile tabs */
-.scrollbar-none::-webkit-scrollbar {
-  display: none;
-}
-.scrollbar-none {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
+.scrollbar-none::-webkit-scrollbar { display: none; }
+.scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }

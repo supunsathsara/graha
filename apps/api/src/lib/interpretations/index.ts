@@ -58,7 +58,13 @@ export interface CompiledReading {
     lagna: number;
     vargottamaPlanets: string[];
     marriageAnalysis: string[];
-    planetPlacements: { planet: string; sign: string; interpretation: string }[];
+    planetPlacements: {
+      planet: string;
+      planetId?: number;
+      sign: string;
+      signId?: number;
+      interpretation: string;
+    }[];
   } | null;
   /** Vedic aspects — which planets aspect which houses */
   aspects: {
@@ -185,7 +191,13 @@ export function compileReading(chart: BirthChart): CompiledReading {
   const navamsaData = chart.planets.length > 0 ? computeNavamsaChart(chart) : null;
   const navamsaAnalysis = navamsaData ? (() => {
     const marriageAnalysis: string[] = [];
-    const planetPlacements: { planet: string; sign: string; interpretation: string }[] = [];
+    const planetPlacements: {
+      planet: string;
+      planetId?: number;
+      sign: string;
+      signId?: number;
+      interpretation: string;
+    }[] = [];
 
     for (const p of navamsaData.planetsInNavamsa) {
       const planet = chart.planets.find(pl => pl.planet === p.planetId as unknown as number);
@@ -195,7 +207,9 @@ export function compileReading(chart: BirthChart): CompiledReading {
 
       planetPlacements.push({
         planet: planet?.name.en || `Planet ${p.planetId}`,
+        planetId: p.planetId,
         sign: signName,
+        signId: p.navamsaSign,
         interpretation: interp,
       });
 

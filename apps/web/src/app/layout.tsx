@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { Fraunces, Manrope, JetBrains_Mono } from "next/font/google";
+import { Fraunces, Manrope, JetBrains_Mono, Geist } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
+import { cn } from "@/lib/utils";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -9,10 +10,7 @@ const fraunces = Fraunces({
   weight: ["500", "600"],
 });
 
-const manrope = Manrope({
-  subsets: ["latin"],
-  variable: "--font-sans",
-});
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
@@ -63,8 +61,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${fraunces.variable} ${manrope.variable} ${jetbrainsMono.variable} font-sans`}>
+    <html lang="en" className={cn("dark", "font-sans", geist.variable)}>
+      <body className={`${fraunces.variable} ${geist.variable} ${jetbrainsMono.variable} font-sans`}>
         <Providers>{children}</Providers>
       </body>
     </html>
