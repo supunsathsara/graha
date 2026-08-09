@@ -67,9 +67,7 @@ function getAspectedHouses(currentHouse: number, offsets: number[]): number[] {
   });
 }
 
-export function computeAspects(
-  planets: PlanetaryPosition[]
-): Aspect[] {
+export function computeAspects(planets: PlanetaryPosition[]): Aspect[] {
   const aspects: Aspect[] = [];
 
   for (const planet of planets) {
@@ -77,7 +75,7 @@ export function computeAspects(
     const fromHouse = planet.house;
 
     // Universal 7th aspect (all planets)
-    const universalRules = ASPECT_RULES.filter(r => r.planetId === -1);
+    const universalRules = ASPECT_RULES.filter((r) => r.planetId === -1);
     for (const rule of universalRules) {
       const aspectedHouses = getAspectedHouses(fromHouse, rule.offsets);
       for (const toHouse of aspectedHouses) {
@@ -92,13 +90,18 @@ export function computeAspects(
           type: rule.type,
           angle,
           isBenefic: getIsBenefic(pid, toHouse, planet),
-          interpretation: buildAspectInterpretation(planet, toHouse, angle, rule.type),
+          interpretation: buildAspectInterpretation(
+            planet,
+            toHouse,
+            angle,
+            rule.type,
+          ),
         });
       }
     }
 
     // Special aspects (Mars, Saturn, Jupiter, Rahu, Ketu)
-    const specialRules = ASPECT_RULES.filter(r => r.planetId === pid);
+    const specialRules = ASPECT_RULES.filter((r) => r.planetId === pid);
     for (const rule of specialRules) {
       const aspectedHouses = getAspectedHouses(fromHouse, rule.offsets);
       for (const toHouse of aspectedHouses) {
@@ -117,7 +120,12 @@ export function computeAspects(
           type: rule.type,
           angle,
           isBenefic: getIsBenefic(pid, toHouse, planet),
-          interpretation: buildAspectInterpretation(planet, toHouse, angle, rule.type),
+          interpretation: buildAspectInterpretation(
+            planet,
+            toHouse,
+            angle,
+            rule.type,
+          ),
         });
       }
     }
@@ -127,11 +135,15 @@ export function computeAspects(
 }
 
 function getAspectAngle(fromHouse: number, toHouse: number): number {
-  const diff = ((toHouse - fromHouse) % 12 + 12) % 12;
+  const diff = (((toHouse - fromHouse) % 12) + 12) % 12;
   return diff * 30; // each house = 30°
 }
 
-function getIsBenefic(planetId: number, toHouse: number, planet: PlanetaryPosition): boolean {
+function getIsBenefic(
+  planetId: number,
+  toHouse: number,
+  planet: PlanetaryPosition,
+): boolean {
   if (NATURAL_BENEFICS.includes(planetId)) return true;
   if (NATURAL_MALEFICS.includes(planetId)) return false;
   return true; // neutral
@@ -141,15 +153,23 @@ function buildAspectInterpretation(
   planet: PlanetaryPosition,
   toHouse: number,
   angle: number,
-  aspectType: AspectType
+  aspectType: AspectType,
 ): string {
   const planetName = planet.name.en;
   const prefix = planet.isRetrograde ? "Retrograde " : "";
 
-  const aspectStrength = aspectType === "full" ? "powerfully" :
-    aspectType === "special" ? "strongly" : "moderately";
+  const aspectStrength =
+    aspectType === "full"
+      ? "powerfully"
+      : aspectType === "special"
+        ? "strongly"
+        : "moderately";
 
-  const benefic = getIsBenefic(planet.planet as unknown as number, toHouse, planet);
+  const benefic = getIsBenefic(
+    planet.planet as unknown as number,
+    toHouse,
+    planet,
+  );
   const effect = benefic ? "beneficially" : "challengingly";
 
   const houseMeanings: Record<number, string> = {
@@ -184,14 +204,18 @@ export function getAspectSummary(aspects: Aspect[]): string[] {
   }
 
   for (const [house, houseAspects] of byHouse) {
-    const beneficCount = houseAspects.filter(a => a.isBenefic).length;
-    const maleficCount = houseAspects.filter(a => !a.isBenefic).length;
-    const planets = houseAspects.map(a => a.fromPlanet.name).join(", ");
+    const beneficCount = houseAspects.filter((a) => a.isBenefic).length;
+    const maleficCount = houseAspects.filter((a) => !a.isBenefic).length;
+    const planets = houseAspects.map((a) => a.fromPlanet.name).join(", ");
 
     if (beneficCount > maleficCount) {
-      summaries.push(`House ${house} receives predominantly beneficial aspects from ${planets} — matters of this house are supported.`);
+      summaries.push(
+        `House ${house} receives predominantly beneficial aspects from ${planets} — matters of this house are supported.`,
+      );
     } else if (maleficCount > beneficCount) {
-      summaries.push(`House ${house} receives challenging aspects from ${planets} — matters of this house may face obstacles.`);
+      summaries.push(
+        `House ${house} receives challenging aspects from ${planets} — matters of this house may face obstacles.`,
+      );
     } else {
       summaries.push(`House ${house} receives mixed aspects from ${planets}.`);
     }

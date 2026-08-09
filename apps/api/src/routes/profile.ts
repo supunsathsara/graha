@@ -29,34 +29,42 @@ const createProfileSchema = z.object({
 const updateProfileSchema = createProfileSchema.partial();
 
 // ─── POST /create ──────────────────────────────────────────
-profileRouter.post("/create", zValidator("json", createProfileSchema), async (c) => {
-  try {
-    const body = c.req.valid("json");
-    const id = generateId();
+profileRouter.post(
+  "/create",
+  zValidator("json", createProfileSchema),
+  async (c) => {
+    try {
+      const body = c.req.valid("json");
+      const id = generateId();
 
-    const profile = {
-      id,
-      ...body,
-      timezone: body.timezone || "Asia/Colombo",
-      createdAt: new Date().toISOString(),
-    };
+      const profile = {
+        id,
+        ...body,
+        timezone: body.timezone || "Asia/Colombo",
+        createdAt: new Date().toISOString(),
+      };
 
-    profiles.set(id, profile);
+      profiles.set(id, profile);
 
-    return c.json({
-      success: true,
-      profile,
-    }, 201);
-  } catch (error) {
-    return c.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : "Failed to create profile",
-      },
-      500
-    );
-  }
-});
+      return c.json(
+        {
+          success: true,
+          profile,
+        },
+        201,
+      );
+    } catch (error) {
+      return c.json(
+        {
+          success: false,
+          error:
+            error instanceof Error ? error.message : "Failed to create profile",
+        },
+        500,
+      );
+    }
+  },
+);
 
 // ─── GET /:id ───────────────────────────────────────────────
 profileRouter.get("/:id", async (c) => {
@@ -64,10 +72,13 @@ profileRouter.get("/:id", async (c) => {
   const profile = profiles.get(id);
 
   if (!profile) {
-    return c.json({
-      success: false,
-      error: "Profile not found",
-    }, 404);
+    return c.json(
+      {
+        success: false,
+        error: "Profile not found",
+      },
+      404,
+    );
   }
 
   return c.json({
@@ -77,26 +88,38 @@ profileRouter.get("/:id", async (c) => {
 });
 
 // ─── PUT /:id ───────────────────────────────────────────────
-profileRouter.put("/:id", zValidator("json", updateProfileSchema), async (c) => {
-  const id = c.req.param("id");
-  const existing = profiles.get(id);
+profileRouter.put(
+  "/:id",
+  zValidator("json", updateProfileSchema),
+  async (c) => {
+    const id = c.req.param("id");
+    const existing = profiles.get(id);
 
-  if (!existing) {
+    if (!existing) {
+      return c.json(
+        {
+          success: false,
+          error: "Profile not found",
+        },
+        404,
+      );
+    }
+
+    const body = c.req.valid("json");
+    const updated = {
+      ...existing,
+      ...body,
+      id,
+      updatedAt: new Date().toISOString(),
+    };
+    profiles.set(id, updated);
+
     return c.json({
-      success: false,
-      error: "Profile not found",
-    }, 404);
-  }
-
-  const body = c.req.valid("json");
-  const updated = { ...existing, ...body, id, updatedAt: new Date().toISOString() };
-  profiles.set(id, updated);
-
-  return c.json({
-    success: true,
-    profile: updated,
-  });
-});
+      success: true,
+      profile: updated,
+    });
+  },
+);
 
 // ─── GET / ──────────────────────────────────────────────────
 profileRouter.get("/", async (c) => {

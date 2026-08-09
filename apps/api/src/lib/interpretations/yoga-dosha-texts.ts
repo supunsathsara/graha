@@ -7,19 +7,26 @@ import type { Yoga, Dosha } from "../vedic.js";
 
 export function getYogaInterpretation(yoga: Yoga): string {
   const descriptions: Record<string, string> = {
-    "Gaja Kesari Yoga": "This powerful Raja Yoga brings wisdom, prosperity, and good reputation. It indicates a person of high moral character, intelligence, and influence. The combination of Jupiter and Moon in angular houses creates a mind that is both wise and compassionate.",
-    "Dhana Yoga": "This wealth-giving yoga indicates financial prosperity and material abundance. The lords of trine houses (5th and 9th) in kendra or trikona create strong dhana (wealth) indications. Native enjoys comfortable lifestyle.",
-    "Raja Yoga": "The combination of kendra and trikona lords creates Raja Yoga — one of the most powerful yogas for success, authority, and leadership. Native rises to positions of power and influence in society.",
-    "Vesi Yoga": "Benefic planets in the 2nd from Sun indicate wealth accumulation, good speech, and intelligence. Native earns through their own efforts and enjoys steady financial growth.",
+    "Gaja Kesari Yoga":
+      "This powerful Raja Yoga brings wisdom, prosperity, and good reputation. It indicates a person of high moral character, intelligence, and influence. The combination of Jupiter and Moon in angular houses creates a mind that is both wise and compassionate.",
+    "Dhana Yoga":
+      "This wealth-giving yoga indicates financial prosperity and material abundance. The lords of trine houses (5th and 9th) in kendra or trikona create strong dhana (wealth) indications. Native enjoys comfortable lifestyle.",
+    "Raja Yoga":
+      "The combination of kendra and trikona lords creates Raja Yoga — one of the most powerful yogas for success, authority, and leadership. Native rises to positions of power and influence in society.",
+    "Vesi Yoga":
+      "Benefic planets in the 2nd from Sun indicate wealth accumulation, good speech, and intelligence. Native earns through their own efforts and enjoys steady financial growth.",
   };
   return descriptions[yoga.name] || `${yoga.name}: ${yoga.description}`;
 }
 
 export function getDoshaInterpretation(dosha: Dosha): string {
   const texts: Record<string, string> = {
-    "Mangalik Dosha": "Mars afflicting key houses (1,2,4,7,8,12) can create challenges in relationships and marriage. This dosha is mitigated by marrying someone also born with Mangalik Dosha, or after the age of 28. Remedies include performing a special puja and wearing a red coral after proper consultation.",
-    "Kaal Sarpa Yoga": "All planets situated between Rahu and Ketu creates a karmic pattern where the native experiences both extreme highs and lows in life. This yoga indicates that the soul has brought significant karmic baggage. Spiritual practices, mantra chanting, and serving the underprivileged help mitigate its effects.",
-    "Pitri Dosha": "The conjunction of Sun and Venus affects family relationships and ancestral blessings. This may indicate karmic patterns related to the paternal lineage. Performing ancestral rituals (Shraddha) and honoring one's father through service helps balance this energy.",
+    "Mangalik Dosha":
+      "Mars afflicting key houses (1,2,4,7,8,12) can create challenges in relationships and marriage. This dosha is mitigated by marrying someone also born with Mangalik Dosha, or after the age of 28. Remedies include performing a special puja and wearing a red coral after proper consultation.",
+    "Kaal Sarpa Yoga":
+      "All planets situated between Rahu and Ketu creates a karmic pattern where the native experiences both extreme highs and lows in life. This yoga indicates that the soul has brought significant karmic baggage. Spiritual practices, mantra chanting, and serving the underprivileged help mitigate its effects.",
+    "Pitri Dosha":
+      "The conjunction of Sun and Venus affects family relationships and ancestral blessings. This may indicate karmic patterns related to the paternal lineage. Performing ancestral rituals (Shraddha) and honoring one's father through service helps balance this energy.",
   };
   return texts[dosha.name] || dosha.description;
 }
@@ -27,7 +34,7 @@ export function getDoshaInterpretation(dosha: Dosha): string {
 export function getAspectInterpretation(
   aspectPlanet: string,
   aspectedHouse: number,
-  aspectType: string
+  aspectType: string,
 ): string {
   const aspects: Record<string, string> = {
     conjunction: `${aspectPlanet} is conjunct, lending its full energy to matters of house ${aspectedHouse}.`,
@@ -36,7 +43,9 @@ export function getAspectInterpretation(
     "opposition (180°)": `${aspectPlanet} opposes house ${aspectedHouse}, creating awareness through polarity.`,
     "sextile (60°)": `${aspectPlanet} supports house ${aspectedHouse} with opportunity and ease.`,
   };
-  return aspects[aspectType] || `${aspectPlanet} aspects house ${aspectedHouse}.`;
+  return (
+    aspects[aspectType] || `${aspectPlanet} aspects house ${aspectedHouse}.`
+  );
 }
 
 // Text for each planet's general significance (Graha Karakatwas)

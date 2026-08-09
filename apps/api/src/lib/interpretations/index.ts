@@ -4,13 +4,21 @@
  * Takes a BirthChart → evaluates all applicable rules → produces a structured reading.
  * No AI involvement — every statement is sourced from the rule tables.
  */
-import type { BirthChart, PlanetaryPosition, ChartInterpretation, DailyPrediction } from "../../types/chart.js";
+import type {
+  BirthChart,
+  PlanetaryPosition,
+  ChartInterpretation,
+  DailyPrediction,
+} from "../../types/chart.js";
 import { ZODIAC_NAMES, PLANET_NAMES } from "../../types/chart.js";
 import { getPlanetInHouseInterpretation } from "./planets-in-houses.js";
 import { getPlanetInSignInterpretation } from "./planets-in-signs.js";
 import { getHouseLordInterpretation } from "./house-lords.js";
 import { getNakshatraByLongitude } from "./nakshatras.js";
-import { getNavamsaPlanetInterpretation, computeNavamsaChart } from "./navamsa.js";
+import {
+  getNavamsaPlanetInterpretation,
+  computeNavamsaChart,
+} from "./navamsa.js";
 import { getRemedy, getGeneralRemedy } from "./remedies.js";
 import {
   getYogaInterpretation,
@@ -21,7 +29,12 @@ import {
 } from "./yoga-dosha-texts.js";
 import { detectYogas, detectDoshas } from "../vedic.js";
 import { computeAspects, getAspectSummary } from "./aspects.js";
-import { getFullDignity, detectPanchamahapurushaYogas, isCombust, getRetrogradeDignity } from "./dignity.js";
+import {
+  getFullDignity,
+  detectPanchamahapurushaYogas,
+  isCombust,
+  getRetrogradeDignity,
+} from "./dignity.js";
 
 // ─── Compiled Reading ──────────────────────────────────────
 export interface CompiledReading {
@@ -49,7 +62,12 @@ export interface CompiledReading {
   strengths: string[];
   challenges: string[];
   /** Recommended remedies */
-  remedies: { planet: string; gem: string | null; mantra: string; action: string }[];
+  remedies: {
+    planet: string;
+    gem: string | null;
+    mantra: string;
+    action: string;
+  }[];
   /** Favorable and challenging planets */
   favorablePlanets: string[];
   challengingPlanets: string[];
@@ -87,7 +105,11 @@ export interface CompiledReading {
     retrogradeEffect: string;
   }>;
   /** Panchamahapurusha Yogas (five great yogas) */
-  panchamahapurushaYogas: Array<{ name: string; planet: string; description: string }>;
+  panchamahapurushaYogas: Array<{
+    name: string;
+    planet: string;
+    description: string;
+  }>;
 }
 
 // ─── Compile ────────────────────────────────────────────────
@@ -119,14 +141,14 @@ export function compileReading(chart: BirthChart): CompiledReading {
 
   // 9. Yogas
   const yogas = detectYogas(chart);
-  const yogaTexts = yogas.map(y => ({
+  const yogaTexts = yogas.map((y) => ({
     name: y.name,
     description: getYogaInterpretation(y),
   }));
 
   // 10. Doshas
   const doshas = detectDoshas(chart);
-  const doshaTexts = doshas.map(d => ({
+  const doshaTexts = doshas.map((d) => ({
     name: d.name,
     description: getDoshaInterpretation(d),
     severity: d.severity,
@@ -146,15 +168,22 @@ export function compileReading(chart: BirthChart): CompiledReading {
 
   for (const planet of chart.planets) {
     if (planet.dignity === "exalted") {
-      allStrengths.push(`${planet.name.en} is exalted in ${ZODIAC_NAMES[planet.sign]?.en} — exceptionally powerful.`);
+      allStrengths.push(
+        `${planet.name.en} is exalted in ${ZODIAC_NAMES[planet.sign]?.en} — exceptionally powerful.`,
+      );
       favorablePlanets.push(planet.name.en);
     }
     if (planet.dignity === "debilitated") {
-      allChallenges.push(`${planet.name.en} is debilitated in ${ZODIAC_NAMES[planet.sign]?.en} — requires conscious effort to express.`);
+      allChallenges.push(
+        `${planet.name.en} is debilitated in ${ZODIAC_NAMES[planet.sign]?.en} — requires conscious effort to express.`,
+      );
       challengingPlanets.push(planet.name.en);
 
       // Add remedy for debilitated planets
-      const remedy = getRemedy(planet.planet as unknown as number, "debilitated");
+      const remedy = getRemedy(
+        planet.planet as unknown as number,
+        "debilitated",
+      );
       if (remedy) {
         remedies.push({
           planet: planet.name.en,
@@ -165,13 +194,15 @@ export function compileReading(chart: BirthChart): CompiledReading {
       }
     }
     if (planet.isRetrograde) {
-      allChallenges.push(`${planet.name.en} is retrograde — its energy is turned inward. Needs conscious expression.`);
+      allChallenges.push(
+        `${planet.name.en} is retrograde — its energy is turned inward. Needs conscious expression.`,
+      );
     }
   }
 
   // Add remedies for weakened planets
   for (const planet of chart.planets) {
-    if (!remedies.find(r => r.planet === planet.name.en)) {
+    if (!remedies.find((r) => r.planet === planet.name.en)) {
       const remedy = getGeneralRemedy(planet.planet as unknown as number);
       if (remedy) {
         remedies.push({
@@ -188,82 +219,115 @@ export function compileReading(chart: BirthChart): CompiledReading {
   const general = buildGeneralReading(chart, lagnaName, yogas, doshas);
 
   // ─── Navamsa (D9) Analysis ───────────────────────────
-  const navamsaData = chart.planets.length > 0 ? computeNavamsaChart(chart) : null;
-  const navamsaAnalysis = navamsaData ? (() => {
-    const marriageAnalysis: string[] = [];
-    const planetPlacements: {
-      planet: string;
-      planetId?: number;
-      sign: string;
-      signId?: number;
-      interpretation: string;
-    }[] = [];
+  const navamsaData =
+    chart.planets.length > 0 ? computeNavamsaChart(chart) : null;
+  const navamsaAnalysis = navamsaData
+    ? (() => {
+        const marriageAnalysis: string[] = [];
+        const planetPlacements: {
+          planet: string;
+          planetId?: number;
+          sign: string;
+          signId?: number;
+          interpretation: string;
+        }[] = [];
 
-    for (const p of navamsaData.planetsInNavamsa) {
-      const planet = chart.planets.find(pl => pl.planet === p.planetId as unknown as number);
-      const signName = ZODIAC_NAMES[p.navamsaSign]?.en || "Unknown";
-      const isVargottama = navamsaData.vargottamaPlanets.includes(p.planetId);
-      const interp = getNavamsaPlanetInterpretation(p.planetId, p.navamsaSign, isVargottama);
+        for (const p of navamsaData.planetsInNavamsa) {
+          const planet = chart.planets.find(
+            (pl) => pl.planet === (p.planetId as unknown as number),
+          );
+          const signName = ZODIAC_NAMES[p.navamsaSign]?.en || "Unknown";
+          const isVargottama = navamsaData.vargottamaPlanets.includes(
+            p.planetId,
+          );
+          const interp = getNavamsaPlanetInterpretation(
+            p.planetId,
+            p.navamsaSign,
+            isVargottama,
+          );
 
-      planetPlacements.push({
-        planet: planet?.name.en || `Planet ${p.planetId}`,
-        planetId: p.planetId,
-        sign: signName,
-        signId: p.navamsaSign,
-        interpretation: interp,
-      });
+          planetPlacements.push({
+            planet: planet?.name.en || `Planet ${p.planetId}`,
+            planetId: p.planetId,
+            sign: signName,
+            signId: p.navamsaSign,
+            interpretation: interp,
+          });
 
-      // Marriage-specific: Venus, Jupiter, 7th lord in Navamsa
-      if (p.planetId === 3) {
-        marriageAnalysis.push(`Venus is in ${signName} in D9 — ${getNavamsaRelationshipText(p.navamsaSign)}`);
-      }
-      if (p.planetId === 5) {
-        marriageAnalysis.push(`Jupiter is in ${signName} in D9 — ${getNavamsaJupiterText(p.navamsaSign)}`);
-      }
-      if (isVargottama) {
-        marriageAnalysis.push(`${planet?.name.en || `Planet ${p.planetId}`} is Vargottama — strongly placed in both Rasi and Navamsa, giving excellent results for its significations.`);
-      }
-    }
+          // Marriage-specific: Venus, Jupiter, 7th lord in Navamsa
+          if (p.planetId === 3) {
+            marriageAnalysis.push(
+              `Venus is in ${signName} in D9 — ${getNavamsaRelationshipText(p.navamsaSign)}`,
+            );
+          }
+          if (p.planetId === 5) {
+            marriageAnalysis.push(
+              `Jupiter is in ${signName} in D9 — ${getNavamsaJupiterText(p.navamsaSign)}`,
+            );
+          }
+          if (isVargottama) {
+            marriageAnalysis.push(
+              `${planet?.name.en || `Planet ${p.planetId}`} is Vargottama — strongly placed in both Rasi and Navamsa, giving excellent results for its significations.`,
+            );
+          }
+        }
 
-    const navamsaLagnaName = ZODIAC_NAMES[navamsaData.navamsaLagna]?.en || "Unknown";
-    marriageAnalysis.unshift(`Navamsa Lagna is ${navamsaLagnaName}. This influences the overall quality of relationships and marriage.`);
+        const navamsaLagnaName =
+          ZODIAC_NAMES[navamsaData.navamsaLagna]?.en || "Unknown";
+        marriageAnalysis.unshift(
+          `Navamsa Lagna is ${navamsaLagnaName}. This influences the overall quality of relationships and marriage.`,
+        );
 
-    return {
-      lagna: navamsaData.navamsaLagna,
-      vargottamaPlanets: navamsaData.vargottamaPlanets.map(id => {
-        const p = chart.planets.find(pl => pl.planet === id as unknown as number);
-        return p?.name.en || `Planet ${id}`;
-      }),
-      marriageAnalysis,
-      planetPlacements,
-    };
-  })() : null;
+        return {
+          lagna: navamsaData.navamsaLagna,
+          vargottamaPlanets: navamsaData.vargottamaPlanets.map((id) => {
+            const p = chart.planets.find(
+              (pl) => pl.planet === (id as unknown as number),
+            );
+            return p?.name.en || `Planet ${id}`;
+          }),
+          marriageAnalysis,
+          planetPlacements,
+        };
+      })()
+    : null;
 
   // ─── Aspects ─────────────────────────────────────────
-  const allAspects = chart.planets.length > 0 ? computeAspects(chart.planets) : [];
-  const aspectSummary = allAspects.length > 0 ? getAspectSummary(allAspects) : [];
-  const aspects = allAspects.length > 0 ? {
-    summary: aspectSummary,
-    details: allAspects.map(a => ({
-      fromPlanet: a.fromPlanet.name,
-      fromHouse: a.fromPlanet.house,
-      toHouse: a.toHouse,
-      type: a.type,
-      isBenefic: a.isBenefic,
-      interpretation: a.interpretation,
-    })),
-  } : null;
+  const allAspects =
+    chart.planets.length > 0 ? computeAspects(chart.planets) : [];
+  const aspectSummary =
+    allAspects.length > 0 ? getAspectSummary(allAspects) : [];
+  const aspects =
+    allAspects.length > 0
+      ? {
+          summary: aspectSummary,
+          details: allAspects.map((a) => ({
+            fromPlanet: a.fromPlanet.name,
+            fromHouse: a.fromPlanet.house,
+            toHouse: a.toHouse,
+            type: a.type,
+            isBenefic: a.isBenefic,
+            interpretation: a.interpretation,
+          })),
+        }
+      : null;
 
   // ─── Full Dignity + Combustion + Panchamahapurusha ────
   const planetaryDignities: CompiledReading["planetaryDignities"] = [];
-  const sun = chart.planets.find(p => p.planet === 0);
+  const sun = chart.planets.find((p) => p.planet === 0);
   const sunLong = sun?.longitude || 0;
 
   for (const planet of chart.planets) {
     const pid = planet.planet as unknown as number;
     const { dignity, explanation } = getFullDignity(pid, planet.longitude);
-    const { combust } = pid !== 0 ? isCombust(pid, planet.longitude, sunLong) : { combust: false };
-    const retroEffect = getRetrogradeDignity(planet.isRetrograde, dignity as any);
+    const { combust } =
+      pid !== 0
+        ? isCombust(pid, planet.longitude, sunLong)
+        : { combust: false };
+    const retroEffect = getRetrogradeDignity(
+      planet.isRetrograde,
+      dignity as any,
+    );
 
     // Update the planet's dignity in the chart for other uses
     (planet as any).dignity = dignity;
@@ -279,14 +343,14 @@ export function compileReading(chart: BirthChart): CompiledReading {
 
   // Panchamahapurusha Yogas
   const pmpYogas = detectPanchamahapurushaYogas(
-    chart.planets.map(p => ({
+    chart.planets.map((p) => ({
       planetId: p.planet as unknown as number,
       sign: p.sign,
       house: p.house,
       dignity: p.dignity as any,
-    }))
+    })),
   );
-  const panchamahapurushaYogas = pmpYogas.map(y => ({
+  const panchamahapurushaYogas = pmpYogas.map((y) => ({
     name: y.name,
     planet: y.planet,
     description: y.description,
@@ -303,8 +367,12 @@ export function compileReading(chart: BirthChart): CompiledReading {
     yogas: yogaTexts,
     doshas: doshaTexts,
     currentDasa,
-    strengths: allStrengths.length ? allStrengths : ["Balanced planetary configuration"],
-    challenges: allChallenges.length ? allChallenges : ["No major challenging aspects detected"],
+    strengths: allStrengths.length
+      ? allStrengths
+      : ["Balanced planetary configuration"],
+    challenges: allChallenges.length
+      ? allChallenges
+      : ["No major challenging aspects detected"],
     remedies,
     favorablePlanets,
     challengingPlanets,
@@ -316,7 +384,9 @@ export function compileReading(chart: BirthChart): CompiledReading {
 }
 
 // ─── Convert to ChartInterpretation ─────────────────────────
-export function readingToInterpretation(reading: CompiledReading): ChartInterpretation {
+export function readingToInterpretation(
+  reading: CompiledReading,
+): ChartInterpretation {
   return {
     general: reading.general + "\n\n" + reading.personality,
     career: reading.career,
@@ -335,7 +405,7 @@ export function readingToInterpretation(reading: CompiledReading): ChartInterpre
 function buildPersonality(chart: BirthChart): string {
   const lagnaName = ZODIAC_NAMES[chart.lagna.sign]?.en || "Unknown";
   const lagnaLord = getPlanetInHouseInterpretation(0, chart.lagna.sign + 1);
-  const moonSign = chart.planets.find(p => p.planet === 1);
+  const moonSign = chart.planets.find((p) => p.planet === 1);
   const moonSignName = moonSign ? ZODIAC_NAMES[moonSign.sign]?.en : "Unknown";
 
   let text = `You have ${lagnaName} rising as your Lagna (Ascendant). This gives you the core personality traits of ${getSignTrait(lagnaName)}. `;
@@ -358,16 +428,20 @@ function buildHouseInfluences(chart: BirthChart): string[] {
 
   for (let h = 1; h <= 12; h++) {
     const houseSignificance = HOUSE_SIGNIFICANCE[h];
-    const planetsInHouse = chart.planets.filter(p => p.house === h);
+    const planetsInHouse = chart.planets.filter((p) => p.house === h);
 
     let text = `House ${h}: ${houseSignificance}\n`;
 
     if (planetsInHouse.length === 0) {
-      text += "No planets occupy this house. Its matters are influenced by its lord's placement elsewhere. ";
+      text +=
+        "No planets occupy this house. Its matters are influenced by its lord's placement elsewhere. ";
     }
 
     for (const planet of planetsInHouse) {
-      const phInterp = getPlanetInHouseInterpretation(planet.planet as unknown as number, h);
+      const phInterp = getPlanetInHouseInterpretation(
+        planet.planet as unknown as number,
+        h,
+      );
       if (phInterp) {
         text += `${planet.name.en} here: ${phInterp.interpretation} `;
       }
@@ -384,10 +458,17 @@ function buildPlanetReadings(chart: BirthChart): string[] {
 
   for (const planet of chart.planets) {
     const sign = ZODIAC_NAMES[planet.sign]?.en || "Unknown";
-    const houseInterp = getPlanetInHouseInterpretation(planet.planet as unknown as number, planet.house);
-    const signInterp = getPlanetInSignInterpretation(planet.planet as unknown as number, planet.sign);
+    const houseInterp = getPlanetInHouseInterpretation(
+      planet.planet as unknown as number,
+      planet.house,
+    );
+    const signInterp = getPlanetInSignInterpretation(
+      planet.planet as unknown as number,
+      planet.sign,
+    );
     const nak = getNakshatraByLongitude(planet.longitude);
-    const significance = PLANET_SIGNIFICANCE[planet.planet as unknown as number] || "";
+    const significance =
+      PLANET_SIGNIFICANCE[planet.planet as unknown as number] || "";
 
     let text = `${planet.name.en} in ${sign} in house ${planet.house}: `;
     text += `${significance} `;
@@ -402,7 +483,8 @@ function buildPlanetReadings(chart: BirthChart): string[] {
     text += `Birth star: ${nak.name}. `;
 
     if (planet.isRetrograde) {
-      text += "Retrograde — energy is internalized, results come later in life. ";
+      text +=
+        "Retrograde — energy is internalized, results come later in life. ";
     }
 
     readings.push(text.trim());
@@ -415,149 +497,199 @@ function buildCareerReading(chart: BirthChart): string {
   const texts: string[] = [];
 
   // 10th house analysis
-  const tenthHousePlanets = chart.planets.filter(p => p.house === 10);
+  const tenthHousePlanets = chart.planets.filter((p) => p.house === 10);
   for (const p of tenthHousePlanets) {
-    const interp = getPlanetInHouseInterpretation(p.planet as unknown as number, 10);
+    const interp = getPlanetInHouseInterpretation(
+      p.planet as unknown as number,
+      10,
+    );
     if (interp) texts.push(`${p.name.en} in the 10th house: ${interp.career}`);
   }
 
   // Sun and Saturn (career indicators)
-  const sun = chart.planets.find(p => p.planet === 0);
-  const saturn = chart.planets.find(p => p.planet === 6);
+  const sun = chart.planets.find((p) => p.planet === 0);
+  const saturn = chart.planets.find((p) => p.planet === 6);
   if (sun && sun.house !== 10) {
     const interp = getPlanetInHouseInterpretation(0, sun.house);
-    if (interp) texts.push(`Sun in house ${sun.house} influences career: ${interp.career}`);
+    if (interp)
+      texts.push(
+        `Sun in house ${sun.house} influences career: ${interp.career}`,
+      );
   }
 
   // Midheaven (MC) — closest house to 10th
   if (tenthHousePlanets.length === 0) {
-    texts.push("No planets in the 10th house — career success comes through the lord of the 10th house. Focus on strengthening the ruler of your midheaven.");
+    texts.push(
+      "No planets in the 10th house — career success comes through the lord of the 10th house. Focus on strengthening the ruler of your midheaven.",
+    );
   }
 
-  return texts.join("\n") || "Career directions are influenced by your 10th house and its lord. Consider professions aligned with your planetary strengths.";
+  return (
+    texts.join("\n") ||
+    "Career directions are influenced by your 10th house and its lord. Consider professions aligned with your planetary strengths."
+  );
 }
 
 function buildRelationshipReading(chart: BirthChart): string {
   const texts: string[] = [];
 
-  const seventhPlanets = chart.planets.filter(p => p.house === 7);
+  const seventhPlanets = chart.planets.filter((p) => p.house === 7);
   for (const p of seventhPlanets) {
-    const interp = getPlanetInHouseInterpretation(p.planet as unknown as number, 7);
-    if (interp) texts.push(`${p.name.en} in 7th house: ${interp.relationships}`);
+    const interp = getPlanetInHouseInterpretation(
+      p.planet as unknown as number,
+      7,
+    );
+    if (interp)
+      texts.push(`${p.name.en} in 7th house: ${interp.relationships}`);
   }
 
-  const venus = chart.planets.find(p => p.planet === 3);
+  const venus = chart.planets.find((p) => p.planet === 3);
   if (venus && venus.house !== 7) {
     const interp = getPlanetInHouseInterpretation(3, venus.house);
-    if (interp) texts.push(`Venus in house ${venus.house}: ${interp.relationships}`);
+    if (interp)
+      texts.push(`Venus in house ${venus.house}: ${interp.relationships}`);
   }
 
   // Check Mangalik dosha
   const doshas = detectDoshas(chart);
-  const mangalik = doshas.find(d => d.name === "Mangalik Dosha" || d.name === "Mangal Cancellation");
+  const mangalik = doshas.find(
+    (d) => d.name === "Mangalik Dosha" || d.name === "Mangal Cancellation",
+  );
   if (mangalik) {
     texts.push(getDoshaInterpretation(mangalik));
   }
 
-  return texts.join("\n") || "Relationship patterns are influenced by the 7th house and Venus. For personalized insights, a complete chart analysis is recommended.";
+  return (
+    texts.join("\n") ||
+    "Relationship patterns are influenced by the 7th house and Venus. For personalized insights, a complete chart analysis is recommended."
+  );
 }
 
 function buildHealthReading(chart: BirthChart): string {
   const texts: string[] = [];
 
   // 1st house (overall vitality)
-  const firstHousePlanets = chart.planets.filter(p => p.house === 1);
+  const firstHousePlanets = chart.planets.filter((p) => p.house === 1);
   for (const p of firstHousePlanets) {
-    const interp = getPlanetInHouseInterpretation(p.planet as unknown as number, 1);
-    if (interp) texts.push(`${p.name.en} in 1st house affects health: ${interp.health}`);
+    const interp = getPlanetInHouseInterpretation(
+      p.planet as unknown as number,
+      1,
+    );
+    if (interp)
+      texts.push(`${p.name.en} in 1st house affects health: ${interp.health}`);
   }
 
   // 6th house (health/illness)
-  const sixthHousePlanets = chart.planets.filter(p => p.house === 6);
+  const sixthHousePlanets = chart.planets.filter((p) => p.house === 6);
   for (const p of sixthHousePlanets) {
-    const interp = getPlanetInHouseInterpretation(p.planet as unknown as number, 6);
+    const interp = getPlanetInHouseInterpretation(
+      p.planet as unknown as number,
+      6,
+    );
     if (interp) texts.push(`${p.name.en} in 6th house: ${interp.health}`);
   }
 
   // Check for debilitated or afflicted planets
   for (const p of chart.planets) {
     if (p.dignity === "debilitated") {
-      texts.push(`${p.name.en} is debilitated — its associated body parts need care.`);
+      texts.push(
+        `${p.name.en} is debilitated — its associated body parts need care.`,
+      );
     }
   }
 
-  return texts.join("\n") || "Health is generally balanced. Pay attention to the houses and planets that are most prominent in your chart.";
+  return (
+    texts.join("\n") ||
+    "Health is generally balanced. Pay attention to the houses and planets that are most prominent in your chart."
+  );
 }
 
 function buildFinanceReading(chart: BirthChart): string {
   const texts: string[] = [];
 
   // 2nd house (wealth)
-  const secondHousePlanets = chart.planets.filter(p => p.house === 2);
+  const secondHousePlanets = chart.planets.filter((p) => p.house === 2);
   for (const p of secondHousePlanets) {
-    const interp = getPlanetInHouseInterpretation(p.planet as unknown as number, 2);
+    const interp = getPlanetInHouseInterpretation(
+      p.planet as unknown as number,
+      2,
+    );
     if (interp) texts.push(`${p.name.en} in 2nd house: ${interp.career}`);
   }
 
   // 11th house (gains)
-  const eleventhHousePlanets = chart.planets.filter(p => p.house === 11);
+  const eleventhHousePlanets = chart.planets.filter((p) => p.house === 11);
   for (const p of eleventhHousePlanets) {
-    const interp = getPlanetInHouseInterpretation(p.planet as unknown as number, 11);
+    const interp = getPlanetInHouseInterpretation(
+      p.planet as unknown as number,
+      11,
+    );
     if (interp) texts.push(`${p.name.en} in 11th house: ${interp.career}`);
   }
 
   // Jupiter (wealth indicator)
-  const jupiter = chart.planets.find(p => p.planet === 5);
+  const jupiter = chart.planets.find((p) => p.planet === 5);
   if (jupiter) {
-    texts.push(`Jupiter in house ${jupiter.house} influences financial growth and prosperity.`);
+    texts.push(
+      `Jupiter in house ${jupiter.house} influences financial growth and prosperity.`,
+    );
   }
 
-  return texts.join("\n") || "Financial prospects are determined by the 2nd and 11th houses, as well as Jupiter's placement.";
+  return (
+    texts.join("\n") ||
+    "Financial prospects are determined by the 2nd and 11th houses, as well as Jupiter's placement."
+  );
 }
 
 function buildGeneralReading(
   chart: BirthChart,
   lagnaName: string,
   yogas: ReturnType<typeof detectYogas>,
-  doshas: ReturnType<typeof detectDoshas>
+  doshas: ReturnType<typeof detectDoshas>,
 ): string {
   const parts: string[] = [];
 
-  parts.push(`Your birth chart reveals that you have ${lagnaName} rising as your Lagna. Your core personality, physical constitution, and life approach are shaped by this ascendant.`);
+  parts.push(
+    `Your birth chart reveals that you have ${lagnaName} rising as your Lagna. Your core personality, physical constitution, and life approach are shaped by this ascendant.`,
+  );
 
   if (yogas.length > 0) {
-    parts.push(`Your chart contains ${yogas.length} special yoga combination(s):`);
+    parts.push(
+      `Your chart contains ${yogas.length} special yoga combination(s):`,
+    );
     for (const yoga of yogas) {
       parts.push(`• ${yoga.name}: ${getYogaInterpretation(yoga)}`);
     }
   }
 
-  if (doshas.some(d => d.present)) {
+  if (doshas.some((d) => d.present)) {
     parts.push(`Your chart has the following afflictions (Doshas):`);
-    for (const dosha of doshas.filter(d => d.present)) {
+    for (const dosha of doshas.filter((d) => d.present)) {
       parts.push(`• ${dosha.name}: ${getDoshaInterpretation(dosha)}`);
     }
   }
 
-  parts.push(`Your current Dasa period is ${chart.currentDasa?.lordName.en || "being calculated"}. This planetary period brings specific karmic themes and opportunities to the forefront.`);
+  parts.push(
+    `Your current Dasa period is ${chart.currentDasa?.lordName.en || "being calculated"}. This planetary period brings specific karmic themes and opportunities to the forefront.`,
+  );
 
   return parts.join("\n\n");
 }
 
 function getSignTrait(sign: string): string {
   const traits: Record<string, string> = {
-    "Aries": "courage, initiative, and pioneering spirit",
-    "Taurus": "stability, sensuality, and determination",
-    "Gemini": "intellect, adaptability, and curiosity",
-    "Cancer": "nurturing, intuition, and emotional depth",
-    "Leo": "leadership, creativity, and generosity",
-    "Virgo": "precision, analysis, and practical service",
-    "Libra": "diplomacy, balance, and aesthetic sense",
-    "Scorpio": "intensity, transformation, and investigative power",
-    "Sagittarius": "optimism, adventure, and philosophical wisdom",
-    "Capricorn": "ambition, discipline, and practical mastery",
-    "Aquarius": "innovation, humanitarianism, and independence",
-    "Pisces": "compassion, artistry, and spiritual depths",
+    Aries: "courage, initiative, and pioneering spirit",
+    Taurus: "stability, sensuality, and determination",
+    Gemini: "intellect, adaptability, and curiosity",
+    Cancer: "nurturing, intuition, and emotional depth",
+    Leo: "leadership, creativity, and generosity",
+    Virgo: "precision, analysis, and practical service",
+    Libra: "diplomacy, balance, and aesthetic sense",
+    Scorpio: "intensity, transformation, and investigative power",
+    Sagittarius: "optimism, adventure, and philosophical wisdom",
+    Capricorn: "ambition, discipline, and practical mastery",
+    Aquarius: "innovation, humanitarianism, and independence",
+    Pisces: "compassion, artistry, and spiritual depths",
   };
   return traits[sign] || "unique energy";
 }
@@ -574,7 +706,10 @@ function getDasaInterpretation(planetId: number): string {
     10: "Rahu's period brings rapid worldly success, foreign connections, unconventional achievements, and sudden changes. Materialistic focus.",
     11: "Ketu's period brings spiritual detachment, introspection, health challenges, and past life karmic results. Seek spiritual practices.",
   };
-  return dasaTexts[planetId] || "This planetary period brings its own unique themes based on its placement in the birth chart.";
+  return (
+    dasaTexts[planetId] ||
+    "This planetary period brings its own unique themes based on its placement in the birth chart."
+  );
 }
 
 function getNavamsaRelationshipText(sign: number): string {

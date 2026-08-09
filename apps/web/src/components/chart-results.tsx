@@ -19,6 +19,7 @@ import {
   ZODIAC_EN,
   getPlanetId,
   DIGNITY_TONE,
+  nakNameSi,
 } from "@/lib/astro";
 import { VedicChart } from "@/components/vedic-chart";
 import { DasaTimeline } from "@/components/dasa-timeline";
@@ -28,14 +29,25 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { BirthFormData } from "@/components/birth-form";
 
-export type TabId = "overview" | "planets" | "houses" | "yogas" | "navamsa" | "daily" | "remedies";
+export type TabId =
+  | "overview"
+  | "planets"
+  | "houses"
+  | "yogas"
+  | "navamsa"
+  | "daily"
+  | "remedies";
 
 const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
   { id: "overview", label: "Overview", icon: <Sun className="w-4 h-4" /> },
   { id: "planets", label: "Planets", icon: <Stars className="w-4 h-4" /> },
   { id: "houses", label: "Houses", icon: <Home className="w-4 h-4" /> },
   { id: "yogas", label: "Yogas", icon: <Sparkles className="w-4 h-4" /> },
-  { id: "navamsa", label: "Navamsa D9", icon: <BookOpen className="w-4 h-4" /> },
+  {
+    id: "navamsa",
+    label: "Navamsa D9",
+    icon: <BookOpen className="w-4 h-4" />,
+  },
   { id: "daily", label: "Daily", icon: <CalendarDays className="w-4 h-4" /> },
   { id: "remedies", label: "Remedies", icon: <Gem className="w-4 h-4" /> },
 ];
@@ -94,7 +106,7 @@ export function ChartResults({
               "flex items-center gap-1.5 px-3 md:px-4 py-3 text-xs md:text-sm font-medium whitespace-nowrap transition border-b-2",
               activeTab === tab.id
                 ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground",
             )}
           >
             {tab.icon}
@@ -113,8 +125,12 @@ export function ChartResults({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
-            {activeTab === "overview" && <OverviewTab reading={reading} chart={chart} />}
-            {activeTab === "planets" && <PlanetsTab reading={reading} chart={chart} />}
+            {activeTab === "overview" && (
+              <OverviewTab reading={reading} chart={chart} />
+            )}
+            {activeTab === "planets" && (
+              <PlanetsTab reading={reading} chart={chart} />
+            )}
             {activeTab === "houses" && (
               <HouseExplorer
                 houses={chart?.houses || []}
@@ -139,15 +155,26 @@ function OverviewTab({ reading, chart }: { reading: any; chart: any }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
-        <StatCard label="Lagna" value={`${ZODIAC_GLYPHS[chart?.lagna?.sign ?? 0] ?? ""} ${ZODIAC_NAMES[chart?.lagna?.sign]?.en || "—"}`} />
-        <StatCard label="Lagna degree" value={`${chart?.lagna?.degree?.toFixed(1) || "—"}°`} />
+        <StatCard
+          label="Lagna"
+          value={`${ZODIAC_GLYPHS[chart?.lagna?.sign ?? 0] ?? ""} ${ZODIAC_NAMES[chart?.lagna?.sign]?.en || "—"}`}
+        />
+        <StatCard
+          label="Lagna degree"
+          value={`${chart?.lagna?.degree?.toFixed(1) || "—"}°`}
+        />
         <StatCard label="Planets" value={`${chart?.planets?.length || 0}`} />
-        <StatCard label="Mahadasa" value={reading?.currentDasa?.lordName?.en || "—"} />
+        <StatCard
+          label="Mahadasa"
+          value={reading?.currentDasa?.lordName?.en || "—"}
+        />
       </div>
 
       {reading?.currentDasa && (
         <div className="bg-secondary/30 border border-border rounded-xl p-4 md:p-5">
-          <h4 className="text-sm font-semibold text-primary mb-4">Vimshottari Dasa</h4>
+          <h4 className="text-sm font-semibold text-primary mb-4">
+            Vimshottari Dasa
+          </h4>
           <DasaTimeline dasa={chart?.currentDasa || reading?.currentDasa} />
         </div>
       )}
@@ -155,7 +182,9 @@ function OverviewTab({ reading, chart }: { reading: any; chart: any }) {
       {i.general && <Section title="General reading" text={i.general} />}
       <div className="grid md:grid-cols-2 gap-4">
         {i.career && <Section title="Career" text={i.career} />}
-        {i.relationships && <Section title="Relationships" text={i.relationships} />}
+        {i.relationships && (
+          <Section title="Relationships" text={i.relationships} />
+        )}
         {i.health && <Section title="Health" text={i.health} />}
         {i.finance && <Section title="Finance" text={i.finance} />}
       </div>
@@ -166,7 +195,10 @@ function OverviewTab({ reading, chart }: { reading: any; chart: any }) {
             <h4 className="text-sm font-semibold text-tulsi mb-2">Strengths</h4>
             <ul className="space-y-1">
               {reading.strengths.slice(0, 5).map((s: string, i: number) => (
-                <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                <li
+                  key={i}
+                  className="text-sm text-muted-foreground flex items-start gap-2"
+                >
                   <span className="text-tulsi mt-0.5">•</span>
                   {s}
                 </li>
@@ -176,10 +208,15 @@ function OverviewTab({ reading, chart }: { reading: any; chart: any }) {
         )}
         {reading?.challenges?.length > 0 && (
           <div className="bg-sindoor/5 border border-sindoor/25 rounded-lg p-4">
-            <h4 className="text-sm font-semibold text-sindoor mb-2">Challenges</h4>
+            <h4 className="text-sm font-semibold text-sindoor mb-2">
+              Challenges
+            </h4>
             <ul className="space-y-1">
               {reading.challenges.slice(0, 5).map((c: string, i: number) => (
-                <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                <li
+                  key={i}
+                  className="text-sm text-muted-foreground flex items-start gap-2"
+                >
                   <span className="text-sindoor mt-0.5">•</span>
                   {c}
                 </li>
@@ -206,11 +243,17 @@ function PlanetsTab({ reading, chart }: { reading: any; chart: any }) {
           </h4>
           <div className="grid gap-3">
             {reading.panchamahapurushaYogas.map((y: any, i: number) => (
-              <div key={i} className="bg-primary/5 border border-primary/20 rounded-lg p-3">
+              <div
+                key={i}
+                className="bg-primary/5 border border-primary/20 rounded-lg p-3"
+              >
                 <p className="font-medium text-sm">
-                  {y.name} <span className="text-muted-foreground">({y.planet})</span>
+                  {y.name}{" "}
+                  <span className="text-muted-foreground">({y.planet})</span>
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">{y.description}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {y.description}
+                </p>
               </div>
             ))}
           </div>
@@ -218,7 +261,9 @@ function PlanetsTab({ reading, chart }: { reading: any; chart: any }) {
       )}
 
       <div>
-        <h4 className="text-sm font-semibold text-primary mb-3">Planetary dignities</h4>
+        <h4 className="text-sm font-semibold text-primary mb-3">
+          Planetary dignities
+        </h4>
         <div className="grid md:grid-cols-2 gap-2">
           {dignities.map((d: any, i: number) => (
             <motion.div
@@ -230,14 +275,24 @@ function PlanetsTab({ reading, chart }: { reading: any; chart: any }) {
             >
               <div className="flex items-center justify-between mb-1">
                 <span className="font-medium text-sm flex items-center gap-1.5">
-                  <span className="text-lg leading-none">{PLANET_GLYPHS[getPlanetId(d.planet)] || ""}</span>
+                  <span className="text-lg leading-none">
+                    {PLANET_GLYPHS[getPlanetId(d.planet)] || ""}
+                  </span>
                   {d.planet}
                 </span>
                 <DignityBadge dignity={d.dignity} />
               </div>
               <p className="text-xs text-muted-foreground">{d.explanation}</p>
-              {d.isCombust && <p className="text-xs text-sindoor mt-1">Combust — weakened by Sun proximity</p>}
-              {d.retrogradeEffect && <p className="text-xs text-yellow-400 mt-1">↩ {d.retrogradeEffect}</p>}
+              {d.isCombust && (
+                <p className="text-xs text-sindoor mt-1">
+                  Combust — weakened by Sun proximity
+                </p>
+              )}
+              {d.retrogradeEffect && (
+                <p className="text-xs text-yellow-400 mt-1">
+                  ↩ {d.retrogradeEffect}
+                </p>
+              )}
             </motion.div>
           ))}
         </div>
@@ -245,7 +300,9 @@ function PlanetsTab({ reading, chart }: { reading: any; chart: any }) {
 
       {aspectDetails.length > 0 && (
         <div>
-          <h4 className="text-sm font-semibold text-primary mb-3">Planetary aspects</h4>
+          <h4 className="text-sm font-semibold text-primary mb-3">
+            Planetary aspects
+          </h4>
           <div className="overflow-x-auto rounded-lg border border-border">
             <table className="w-full text-sm min-w-[480px]">
               <thead>
@@ -260,16 +317,27 @@ function PlanetsTab({ reading, chart }: { reading: any; chart: any }) {
                 {aspectDetails.map((a: any, i: number) => (
                   <tr key={i}>
                     <td className="px-3 py-2 font-medium whitespace-nowrap">
-                      {PLANET_GLYPHS[getPlanetId(a.fromPlanet)] || ""} {a.fromPlanet}
-                      <span className="text-muted-foreground font-mono text-xs"> · H{a.fromHouse}</span>
+                      {PLANET_GLYPHS[getPlanetId(a.fromPlanet)] || ""}{" "}
+                      {a.fromPlanet}
+                      <span className="text-muted-foreground font-mono text-xs">
+                        {" "}
+                        · H{a.fromHouse}
+                      </span>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
-                      <Badge variant={a.isBenefic ? "default" : "destructive"} className="text-[10px]">
+                      <Badge
+                        variant={a.isBenefic ? "default" : "destructive"}
+                        className="text-[10px]"
+                      >
                         {a.type}
                       </Badge>
                     </td>
-                    <td className="px-3 py-2 font-mono text-xs">House {a.toHouse}</td>
-                    <td className="px-3 py-2 text-xs text-muted-foreground">{a.interpretation}</td>
+                    <td className="px-3 py-2 font-mono text-xs">
+                      House {a.toHouse}
+                    </td>
+                    <td className="px-3 py-2 text-xs text-muted-foreground">
+                      {a.interpretation}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -282,17 +350,26 @@ function PlanetsTab({ reading, chart }: { reading: any; chart: any }) {
         <h4 className="text-sm font-semibold text-primary mb-3">Positions</h4>
         <div className="grid md:grid-cols-2 gap-2">
           {chart?.planets?.map((p: any, i: number) => (
-            <div key={i} className="bg-secondary/50 border border-border rounded-lg p-3">
+            <div
+              key={i}
+              className="bg-secondary/50 border border-border rounded-lg p-3"
+            >
               <div className="flex items-center justify-between">
                 <span className="font-medium text-sm flex items-center gap-1.5">
-                  <span className="text-lg leading-none">{PLANET_GLYPHS[p.planet] || ""}</span>
+                  <span className="text-lg leading-none">
+                    {PLANET_GLYPHS[p.planet] || ""}
+                  </span>
                   {p.name?.en} {p.isRetrograde && "↩"}
                 </span>
-                <span className="text-xs text-muted-foreground font-mono">House {p.house}</span>
+                <span className="text-xs text-muted-foreground font-mono">
+                  House {p.house}
+                </span>
               </div>
               <p className="text-xs text-muted-foreground mt-0.5 font-mono">
-                {ZODIAC_NAMES[p.sign]?.en || "—"} {p.signDegree?.toFixed(2)}° · {p.nakshatra}
-                {p.nakshatraLord ? ` (${p.nakshatraLord})` : ""}
+                {ZODIAC_NAMES[p.sign]?.en || "—"} {p.signDegree?.toFixed(2)}° ·{" "}
+                {p.nakshatra}
+                {nakNameSi(p.nakshatra) && <span className="text-ash"> ({nakNameSi(p.nakshatra)})</span>}
+                {p.nakshatraLord ? ` · ${p.nakshatraLord}` : ""}
               </p>
             </div>
           ))}
@@ -308,7 +385,9 @@ function YogasTab({ reading }: { reading: any }) {
     <div className="space-y-6">
       {reading?.yogas?.length > 0 && (
         <div>
-          <h4 className="text-sm font-semibold text-tulsi mb-3">Beneficial yogas</h4>
+          <h4 className="text-sm font-semibold text-tulsi mb-3">
+            Beneficial yogas
+          </h4>
           <div className="grid gap-3">
             {reading.yogas.map((y: any, i: number) => (
               <motion.div
@@ -319,7 +398,9 @@ function YogasTab({ reading }: { reading: any }) {
                 className="bg-tulsi/5 border border-tulsi/25 rounded-lg p-4"
               >
                 <p className="font-medium text-sm text-tulsi">{y.name}</p>
-                <p className="text-sm text-muted-foreground mt-1">{y.description}</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {y.description}
+                </p>
               </motion.div>
             ))}
           </div>
@@ -328,7 +409,9 @@ function YogasTab({ reading }: { reading: any }) {
 
       {reading?.doshas?.length > 0 && (
         <div>
-          <h4 className="text-sm font-semibold text-sindoor mb-3">Doshas (afflictions)</h4>
+          <h4 className="text-sm font-semibold text-sindoor mb-3">
+            Doshas (afflictions)
+          </h4>
           <div className="grid gap-3">
             {reading.doshas.map((d: any, i: number) => (
               <motion.div
@@ -347,7 +430,7 @@ function YogasTab({ reading }: { reading: any }) {
                         ? "bg-sindoor/10 text-sindoor border-sindoor/30"
                         : d.severity === "medium"
                           ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/30"
-                          : "bg-tulsi/10 text-tulsi border-tulsi/30"
+                          : "bg-tulsi/10 text-tulsi border-tulsi/30",
                     )}
                   >
                     {d.severity}
@@ -361,7 +444,9 @@ function YogasTab({ reading }: { reading: any }) {
       )}
 
       {!reading?.yogas?.length && !reading?.doshas?.length && (
-        <p className="text-sm text-muted-foreground">No yogas or doshas detected.</p>
+        <p className="text-sm text-muted-foreground">
+          No yogas or doshas detected.
+        </p>
       )}
     </div>
   );
@@ -375,17 +460,26 @@ function NavamsaTab({ reading }: { reading: any }) {
   const d9Planets = useMemo(() => {
     if (!n?.planetPlacements) return [];
     return n.planetPlacements
-      .filter((p: any) => typeof p.planetId === "number" && typeof p.signId === "number")
+      .filter(
+        (p: any) =>
+          typeof p.planetId === "number" && typeof p.signId === "number",
+      )
       .map((p: any) => ({
         planetId: p.planetId,
         // South Indian grid: house 1 = lagna sign; house = offset from lagna + 1
         house: ((p.signId - n.lagna + 12) % 12) + 1,
-        marker: n.vargottamaPlanets?.includes(p.planet) ? "Vargottama" : undefined,
+        marker: n.vargottamaPlanets?.includes(p.planet)
+          ? "Vargottama"
+          : undefined,
       }));
   }, [n]);
 
   if (!n) {
-    return <p className="text-sm text-muted-foreground">No Navamsa data available.</p>;
+    return (
+      <p className="text-sm text-muted-foreground">
+        No Navamsa data available.
+      </p>
+    );
   }
 
   return (
@@ -394,7 +488,9 @@ function NavamsaTab({ reading }: { reading: any }) {
         {/* D9 chart */}
         <div className="w-full max-w-[380px] mx-auto lg:mx-0">
           <div className="flex items-center justify-between mb-3">
-            <span className="font-display text-sm text-turmeric">D9 Navamsa Chart</span>
+            <span className="font-display text-sm text-turmeric">
+              D9 Navamsa Chart
+            </span>
             <button
               type="button"
               onClick={() => setShowChart((s) => !s)}
@@ -435,10 +531,15 @@ function NavamsaTab({ reading }: { reading: any }) {
 
           {n.marriageAnalysis?.length > 0 && (
             <div>
-              <h4 className="text-sm font-semibold text-primary mb-2">Marriage & relationships</h4>
+              <h4 className="text-sm font-semibold text-primary mb-2">
+                Marriage & relationships
+              </h4>
               <div className="space-y-1.5">
                 {n.marriageAnalysis.map((m: string, i: number) => (
-                  <p key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                  <p
+                    key={i}
+                    className="text-sm text-muted-foreground flex items-start gap-2"
+                  >
                     <span className="text-primary mt-1 shrink-0">•</span>
                     {m}
                   </p>
@@ -449,20 +550,29 @@ function NavamsaTab({ reading }: { reading: any }) {
 
           {n.planetPlacements?.length > 0 && (
             <div>
-              <h4 className="text-sm font-semibold text-primary mb-2">Planets in D9</h4>
+              <h4 className="text-sm font-semibold text-primary mb-2">
+                Planets in D9
+              </h4>
               <div className="grid md:grid-cols-2 gap-2">
                 {n.planetPlacements.map((p: any, i: number) => (
-                  <div key={i} className="bg-secondary/50 border border-border rounded-lg p-3">
+                  <div
+                    key={i}
+                    className="bg-secondary/50 border border-border rounded-lg p-3"
+                  >
                     <p className="font-medium text-sm flex items-center gap-1.5">
                       {PLANET_GLYPHS[getPlanetId(p.planet)] || ""} {p.planet}
                       <Badge variant="outline" className="text-[10px]">
                         {ZODIAC_GLYPHS[p.signId ?? 0]} {p.sign}
                       </Badge>
                       {n.vargottamaPlanets?.includes(p.planet) && (
-                        <span className="text-[10px] text-tulsi font-normal">vargottama</span>
+                        <span className="text-[10px] text-tulsi font-normal">
+                          vargottama
+                        </span>
                       )}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">{p.interpretation}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {p.interpretation}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -478,7 +588,11 @@ function NavamsaTab({ reading }: { reading: any }) {
 function RemediesTab({ reading }: { reading: any }) {
   const remedies = reading?.remedies || [];
   if (!remedies.length)
-    return <p className="text-sm text-muted-foreground">No remedies data available.</p>;
+    return (
+      <p className="text-sm text-muted-foreground">
+        No remedies data available.
+      </p>
+    );
 
   return (
     <motion.div
@@ -499,7 +613,8 @@ function RemediesTab({ reading }: { reading: any }) {
           </p>
           <div className="space-y-1 text-xs text-muted-foreground">
             <p>
-              <span className="text-foreground">Gem:</span> {r.gem || "None specific"}
+              <span className="text-foreground">Gem:</span>{" "}
+              {r.gem || "None specific"}
             </p>
             <p>
               <span className="text-foreground">Mantra:</span>{" "}
@@ -545,9 +660,10 @@ function DignityBadge({ dignity }: { dignity: string }) {
       className={cn(
         "text-[10px] px-2 py-0.5 rounded-full border font-medium uppercase tracking-wide",
         tone === "good" && "text-tulsi border-tulsi/40 bg-tulsi/10",
-        tone === "warn" && "text-yellow-400 border-yellow-500/40 bg-yellow-500/10",
+        tone === "warn" &&
+          "text-yellow-400 border-yellow-500/40 bg-yellow-500/10",
         tone === "bad" && "text-sindoor border-sindoor/40 bg-sindoor/10",
-        tone === "neutral" && "text-ash border-border bg-secondary/60"
+        tone === "neutral" && "text-ash border-border bg-secondary/60",
       )}
     >
       {dignity}

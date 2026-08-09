@@ -33,31 +33,42 @@ const chartRequestSchema = z.object({
 });
 
 // ─── POST /compute ─────────────────────────────────────────
-chartRouter.post("/compute", zValidator("json", chartRequestSchema), async (c) => {
-  const start = Date.now();
-  try {
-    ensureEphemeris();
+chartRouter.post(
+  "/compute",
+  zValidator("json", chartRequestSchema),
+  async (c) => {
+    const start = Date.now();
+    try {
+      ensureEphemeris();
 
-    const body = c.req.valid("json");
-    const chart = computeBirthChart(body);
-    const chartId = generateId();
+      const body = c.req.valid("json");
+      const chart = computeBirthChart(body);
+      const chartId = generateId();
 
-    logChartComputation(
-      body.birthDate, body.birthTime, body.latitude, body.longitude,
-      Date.now() - start,
-      { chartId }
-    ).catch(() => {});
+      logChartComputation(
+        body.birthDate,
+        body.birthTime,
+        body.latitude,
+        body.longitude,
+        Date.now() - start,
+        { chartId },
+      ).catch(() => {});
 
-    return c.json({ success: true, chartId, data: chart });
-  } catch (error) {
-    console.error("[Chart] Compute error:", error);
-    logError("Chart computation failed", error).catch(() => {});
-    return c.json(
-      { success: false, error: error instanceof Error ? error.message : "Failed to compute chart" },
-      500
-    );
-  }
-});
+      return c.json({ success: true, chartId, data: chart });
+    } catch (error) {
+      console.error("[Chart] Compute error:", error);
+      logError("Chart computation failed", error).catch(() => {});
+      return c.json(
+        {
+          success: false,
+          error:
+            error instanceof Error ? error.message : "Failed to compute chart",
+        },
+        500,
+      );
+    }
+  },
+);
 
 // ─── GET /chart/:id ────────────────────────────────────────
 chartRouter.get("/:id", async (c) => {
@@ -65,7 +76,8 @@ chartRouter.get("/:id", async (c) => {
   // TODO: Lookup in database
   return c.json({
     success: false,
-    error: "Database not connected — chart not cached yet. Re-compute with POST.",
+    error:
+      "Database not connected — chart not cached yet. Re-compute with POST.",
   });
 });
 

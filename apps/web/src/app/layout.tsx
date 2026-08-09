@@ -10,7 +10,7 @@ const fraunces = Fraunces({
   weight: ["500", "600"],
 });
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
@@ -46,7 +46,14 @@ export const metadata: Metadata = {
     title: "Graha — Vedic Horoscope Engine",
     description:
       "Accurate Vedic astrology calculations powered by Swiss Ephemeris. Get your complete birth chart with planetary positions, yogas, doshas, and remedies.",
-    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "Graha — Vedic Horoscope Engine" }],
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "Graha — Vedic Horoscope Engine",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
@@ -59,10 +66,16 @@ export const metadata: Metadata = {
   icons: { icon: "/icon", apple: "/icon" },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en" className={cn("dark", "font-sans", geist.variable)}>
-      <body className={`${fraunces.variable} ${geist.variable} ${jetbrainsMono.variable} font-sans`}>
+      <body
+        className={`${fraunces.variable} ${geist.variable} ${jetbrainsMono.variable} font-sans`}
+      >
         <Providers>{children}</Providers>
       </body>
     </html>

@@ -11,25 +11,25 @@ export enum Planet {
   Neptune = 8,
   Pluto = 9,
   // Vedic-specific nodes
-  Rahu = 10,   // North Lunar Node
-  Ketu = 11,   // South Lunar Node
+  Rahu = 10, // North Lunar Node
+  Ketu = 11, // South Lunar Node
   Lagna = 100, // Ascendant (calculated, not a planet)
 }
 
 /** Names in Sinhala & English */
 export const PLANET_NAMES: Record<number, { en: string; si: string }> = {
-  [Planet.Sun]:     { en: "Sun",        si: "ඉරු" },
-  [Planet.Moon]:    { en: "Moon",       si: "සඳු" },
-  [Planet.Mercury]: { en: "Mercury",    si: "බුද" },
-  [Planet.Venus]:   { en: "Venus",      si: "සිකුරු" },
-  [Planet.Mars]:    { en: "Mars",       si: "අඟහරු" },
-  [Planet.Jupiter]: { en: "Jupiter",    si: "ගුරු" },
-  [Planet.Saturn]:  { en: "Saturn",     si: "සෙනසුරු" },
-  [Planet.Uranus]:  { en: "Uranus",     si: "යුරේනස්" },
-  [Planet.Neptune]: { en: "Neptune",    si: "නෙප්චූන්" },
-  [Planet.Pluto]:   { en: "Pluto",      si: "ප්ලූටෝ" },
-  [Planet.Rahu]:    { en: "Rahu",       si: "රාහු" },
-  [Planet.Ketu]:    { en: "Ketu",       si: "කේතු" },
+  [Planet.Sun]: { en: "Sun", si: "ඉරු" },
+  [Planet.Moon]: { en: "Moon", si: "සඳු" },
+  [Planet.Mercury]: { en: "Mercury", si: "බුද" },
+  [Planet.Venus]: { en: "Venus", si: "සිකුරු" },
+  [Planet.Mars]: { en: "Mars", si: "අඟහරු" },
+  [Planet.Jupiter]: { en: "Jupiter", si: "ගුරු" },
+  [Planet.Saturn]: { en: "Saturn", si: "සෙනසුරු" },
+  [Planet.Uranus]: { en: "Uranus", si: "යුරේනස්" },
+  [Planet.Neptune]: { en: "Neptune", si: "නෙප්චූන්" },
+  [Planet.Pluto]: { en: "Pluto", si: "ප්ලූටෝ" },
+  [Planet.Rahu]: { en: "Rahu", si: "රාහු" },
+  [Planet.Ketu]: { en: "Ketu", si: "කේතු" },
 };
 
 // ─── Zodiac Signs ────────────────────────────────────────────
@@ -49,23 +49,23 @@ export enum ZodiacSign {
 }
 
 export const ZODIAC_NAMES: Record<number, { en: string; si: string }> = {
-  [ZodiacSign.Aries]:      { en: "Aries",      si: "මේෂ" },
-  [ZodiacSign.Taurus]:     { en: "Taurus",     si: "වෘෂභ" },
-  [ZodiacSign.Gemini]:     { en: "Gemini",     si: "මිථුන" },
-  [ZodiacSign.Cancer]:     { en: "Cancer",     si: "කටක" },
-  [ZodiacSign.Leo]:        { en: "Leo",        si: "සිංහ" },
-  [ZodiacSign.Virgo]:      { en: "Virgo",      si: "කන්‍යා" },
-  [ZodiacSign.Libra]:      { en: "Libra",      si: "තුලා" },
-  [ZodiacSign.Scorpio]:    { en: "Scorpio",    si: "වෘශ්චික" },
-  [ZodiacSign.Sagittarius]:{ en: "Sagittarius",si: "ධනු" },
-  [ZodiacSign.Capricorn]:  { en: "Capricorn",  si: "මකර" },
-  [ZodiacSign.Aquarius]:   { en: "Aquarius",   si: "කුම්භ" },
-  [ZodiacSign.Pisces]:     { en: "Pisces",     si: "මීන" },
+  [ZodiacSign.Aries]: { en: "Aries", si: "මේෂ" },
+  [ZodiacSign.Taurus]: { en: "Taurus", si: "වෘෂභ" },
+  [ZodiacSign.Gemini]: { en: "Gemini", si: "මිථුන" },
+  [ZodiacSign.Cancer]: { en: "Cancer", si: "කටක" },
+  [ZodiacSign.Leo]: { en: "Leo", si: "සිංහ" },
+  [ZodiacSign.Virgo]: { en: "Virgo", si: "කන්‍යා" },
+  [ZodiacSign.Libra]: { en: "Libra", si: "තුලා" },
+  [ZodiacSign.Scorpio]: { en: "Scorpio", si: "වෘශ්චික" },
+  [ZodiacSign.Sagittarius]: { en: "Sagittarius", si: "ධනු" },
+  [ZodiacSign.Capricorn]: { en: "Capricorn", si: "මකර" },
+  [ZodiacSign.Aquarius]: { en: "Aquarius", si: "කුම්භ" },
+  [ZodiacSign.Pisces]: { en: "Pisces", si: "මීන" },
 };
 
 // ─── Houses ──────────────────────────────────────────────────
 export interface House {
-  number: number;        // 1–12
+  number: number; // 1–12
   startLongitude: number;
   endLongitude: number;
   sign: ZodiacSign;
@@ -76,16 +76,24 @@ export interface House {
 export interface PlanetaryPosition {
   planet: Planet;
   name: { en: string; si: string };
-  longitude: number;       // 0–360 degrees
+  longitude: number; // 0–360 degrees
   latitude: number;
-  speed: number;           // positive = direct, negative = retrograde
+  speed: number; // positive = direct, negative = retrograde
   sign: ZodiacSign;
-  signDegree: number;      // degrees within the sign (0–30)
-  house: number;           // which house it falls in (1–12)
-  nakshatra: string;       // Vedic lunar mansion
-  nakshatraLord: string;   // Lord of the nakshatra
+  signDegree: number; // degrees within the sign (0–30)
+  house: number; // which house it falls in (1–12)
+  nakshatra: string; // Vedic lunar mansion
+  nakshatraLord: string; // Lord of the nakshatra
+  nakshatraPada: number; // 1–4 (quarter within the nakshatra)
   isRetrograde: boolean;
-  dignity: "exalted" | "moolatrikona" | "own" | "friendly" | "neutral" | "enemy" | "debilitated";
+  dignity:
+    | "exalted"
+    | "moolatrikona"
+    | "own"
+    | "friendly"
+    | "neutral"
+    | "enemy"
+    | "debilitated";
 }
 
 // ─── Full Birth Chart ────────────────────────────────────────
@@ -94,11 +102,11 @@ export interface BirthChart {
   name?: string;
 
   // Basic info
-  birthDate: string;       // ISO date
-  birthTime: string;       // HH:mm (24h)
+  birthDate: string; // ISO date
+  birthTime: string; // HH:mm (24h)
   latitude: number;
   longitude: number;
-  timezone: string;        // e.g. "Asia/Colombo"
+  timezone: string; // e.g. "Asia/Colombo"
 
   // Calculated
   lagna: {
@@ -110,8 +118,8 @@ export interface BirthChart {
   planets: PlanetaryPosition[];
 
   // Vedic specifics
-  rasiChart: ZodiacSign[];       // Rasi (moon sign) — 12 signs for 12 houses
-  navamsaChart: ZodiacSign[];    // Navamsa D9 chart
+  rasiChart: ZodiacSign[]; // Rasi (moon sign) — 12 signs for 12 houses
+  navamsaChart: ZodiacSign[]; // Navamsa D9 chart
   currentDasa: DasaPeriod | null;
 }
 

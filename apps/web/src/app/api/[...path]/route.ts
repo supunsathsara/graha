@@ -19,7 +19,8 @@ function getApiUrl(): string {
     if (raw) {
       const projects = JSON.parse(raw);
       // Try both project ID and project name as key
-      const apiProject = projects["prj_9rFRuW6H7TcXE59dTn8t6zg1ZgZy"] || projects["graha-api"];
+      const apiProject =
+        projects["prj_9rFRuW6H7TcXE59dTn8t6zg1ZgZy"] || projects["graha-api"];
       if (apiProject?.urls?.production) {
         return `https://${apiProject.urls.production}`;
       }
@@ -51,9 +52,10 @@ async function proxy(request: Request): Promise<Response> {
   const target = `${TARGET}${url.pathname}${url.search}`;
 
   try {
-    const body = request.method !== "GET" && request.method !== "HEAD"
-      ? await request.arrayBuffer()
-      : undefined;
+    const body =
+      request.method !== "GET" && request.method !== "HEAD"
+        ? await request.arrayBuffer()
+        : undefined;
 
     const headers = new Headers(request.headers);
     if (API_SECRET) {
@@ -68,7 +70,7 @@ async function proxy(request: Request): Promise<Response> {
   } catch {
     return new Response(
       JSON.stringify({ success: false, error: "API unreachable" }),
-      { status: 502, headers: { "Content-Type": "application/json" } }
+      { status: 502, headers: { "Content-Type": "application/json" } },
     );
   }
 }

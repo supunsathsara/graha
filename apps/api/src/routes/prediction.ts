@@ -10,10 +10,21 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
 import { computeBirthChart, initEphemeris } from "../lib/ephemeris.js";
-import { getChartInterpretation, getDailyPrediction, initAI } from "../lib/ai.js";
-import { compileReading, readingToInterpretation } from "../lib/interpretations/index.js";
+import {
+  getChartInterpretation,
+  getDailyPrediction,
+  initAI,
+} from "../lib/ai.js";
+import {
+  compileReading,
+  readingToInterpretation,
+} from "../lib/interpretations/index.js";
 import { generateId } from "../db/index.js";
-import { logChartComputation, logAIInteraction, logError } from "../lib/logger.js";
+import {
+  logChartComputation,
+  logAIInteraction,
+  logError,
+} from "../lib/logger.js";
 
 const predictionRouter = new Hono();
 
@@ -51,84 +62,108 @@ const dailySchema = z.object({
 });
 
 // ─── POST /interpret ───────────────────────────────────────
-predictionRouter.post("/interpret", zValidator("json", interpretSchema), async (c) => {
-  try {
-    ensureInit();
-    const start = Date.now();
+predictionRouter.post(
+  "/interpret",
+  zValidator("json", interpretSchema),
+  async (c) => {
+    try {
+      ensureInit();
+      const start = Date.now();
 
-    const body = c.req.valid("json");
-    const aiMode = body.aiMode || "polish"; // default: rule-based + AI polish
+      const body = c.req.valid("json");
+      const aiMode = body.aiMode || "polish"; // default: rule-based + AI polish
 
-    const chart = computeBirthChart({
-      birthDate: body.birthDate,
-      birthTime: body.birthTime,
-      latitude: body.latitude,
-      longitude: body.longitude,
-      timezone: body.timezone,
-      name: body.name,
-    });
+      const chart = computeBirthChart({
+        birthDate: body.birthDate,
+        birthTime: body.birthTime,
+        latitude: body.latitude,
+        longitude: body.longitude,
+        timezone: body.timezone,
+        name: body.name,
+      });
 
-    // Step 1: Rule engine — always runs
-    const reading = compileReading(chart);
-    let interpretation = readingToInterpretation(reading);
+      // Step 1: Rule engine — always runs
+      const reading = compileReading(chart);
+      let interpretation = readingToInterpretation(reading);
 
-    // Step 2: AI polish (optional) — improves language, does NOT change facts
-    let aiUsed = false;
-    if (aiMode === "polish") {
-      try {
-        const aiStart = Date.now();
-        const aiInterpretation = await getChartInterpretation(chart, body.provider || "auto");
-        // Only use AI for the general text and formatting;
-        // keep the rule-based specific fields (career, relationships, health, etc.)
-        if (aiInterpretation.general && aiInterpretation.general.length > 10) {
-          interpretation.general = aiInterpretation.general;
-          aiUsed = true;
+      // Step 2: AI polish (optional) — improves language, does NOT change facts
+      let aiUsed = false;
+      if (aiMode === "polish") {
+        try {
+          const aiStart = Date.now();
+          const aiInterpretation = await getChartInterpretation(
+            chart,
+            body.provider || "auto",
+          );
+          // Only use AI for the general text and formatting;
+          // keep the rule-based specific fields (career, relationships, health, etc.)
+          if (
+            aiInterpretation.general &&
+            aiInterpretation.general.length > 10
+          ) {
+            interpretation.general = aiInterpretation.general;
+            aiUsed = true;
+          }
+          logAIInteraction(
+            body.provider || "groq",
+            "polish",
+            Date.now() - aiStart,
+            true,
+          ).catch(() => {});
+          // AI can enhance descriptions but not override calculated data
+        } catch {
+          logAIInteraction(body.provider || "groq", "polish", 0, false).catch(
+            () => {},
+          );
+          // AI polish failed — use pure rule-based result
         }
-        logAIInteraction(body.provider || "groq", "polish", Date.now() - aiStart, true).catch(() => {});
-        // AI can enhance descriptions but not override calculated data
-      } catch {
-        logAIInteraction(body.provider || "groq", "polish", 0, false).catch(() => {});
-        // AI polish failed — use pure rule-based result
       }
+
+      logChartComputation(
+        body.birthDate,
+        body.birthTime,
+        body.latitude,
+        body.longitude,
+        Date.now() - start,
+        { aiMode, aiUsed },
+      ).catch(() => {});
+
+      return c.json({
+        success: true,
+        predictionId: generateId(),
+        chart,
+        reading: {
+          interpretation,
+          houseInfluences: reading.houseInfluences,
+          yogas: reading.yogas,
+          doshas: reading.doshas,
+          currentDasa: reading.currentDasa,
+          strengths: reading.strengths,
+          challenges: reading.challenges,
+          remedies: reading.remedies,
+          navamsa: reading.navamsa,
+          aspects: reading.aspects,
+          planetaryDignities: reading.planetaryDignities,
+          panchamahapurushaYogas: reading.panchamahapurushaYogas,
+        },
+        ai: aiUsed,
+      });
+    } catch (error) {
+      console.error("[Prediction] Interpret error:", error);
+      logError("Interpretation failed", error).catch(() => {});
+      return c.json(
+        {
+          success: false,
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to generate interpretation",
+        },
+        500,
+      );
     }
-
-    logChartComputation(
-      body.birthDate, body.birthTime, body.latitude, body.longitude,
-      Date.now() - start, { aiMode, aiUsed }
-    ).catch(() => {});
-
-    return c.json({
-      success: true,
-      predictionId: generateId(),
-      chart,
-      reading: {
-        interpretation,
-        houseInfluences: reading.houseInfluences,
-        yogas: reading.yogas,
-        doshas: reading.doshas,
-        currentDasa: reading.currentDasa,
-        strengths: reading.strengths,
-        challenges: reading.challenges,
-        remedies: reading.remedies,
-        navamsa: reading.navamsa,
-        aspects: reading.aspects,
-        planetaryDignities: reading.planetaryDignities,
-        panchamahapurushaYogas: reading.panchamahapurushaYogas,
-      },
-      ai: aiUsed,
-    });
-  } catch (error) {
-    console.error("[Prediction] Interpret error:", error);
-    logError("Interpretation failed", error).catch(() => {});
-    return c.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : "Failed to generate interpretation",
-      },
-      500
-    );
-  }
-});
+  },
+);
 
 // ─── POST /daily ────────────────────────────────────────────
 predictionRouter.post("/daily", zValidator("json", dailySchema), async (c) => {
@@ -161,9 +196,12 @@ predictionRouter.post("/daily", zValidator("json", dailySchema), async (c) => {
     return c.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : "Failed to generate daily prediction",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to generate daily prediction",
       },
-      500
+      500,
     );
   }
 });
@@ -174,7 +212,8 @@ predictionRouter.get("/:id", async (c) => {
   // TODO: Retrieve from database
   return c.json({
     success: false,
-    error: "Database not connected — prediction not cached. Re-generate with POST.",
+    error:
+      "Database not connected — prediction not cached. Re-generate with POST.",
   });
 });
 

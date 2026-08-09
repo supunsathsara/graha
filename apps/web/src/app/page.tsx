@@ -1,14 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMutation } from "@tanstack/react-query";
-import { AlertCircle, Check, Loader2, Share2 } from "lucide-react";
+import { AlertCircle, ArrowRight, Check, Heart, Loader2, Share2 } from "lucide-react";
 import { ZODIAC_NAMES } from "@graha/shared";
 import { VedicChart, ChartPreview } from "@/components/vedic-chart";
 import { BirthForm, type BirthFormData } from "@/components/birth-form";
 import { ChartResults, type TabId } from "@/components/chart-results";
 import { HistoryPanel, useChartHistory } from "@/components/history-panel";
+import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -113,11 +115,12 @@ export default function Home() {
       setForm(data);
       mutation.mutate(data);
     },
-    [mutation]
+    [mutation],
   );
 
   const handleShare = async () => {
-    const url = window.location.origin + window.location.pathname + encodeShare(form);
+    const url =
+      window.location.origin + window.location.pathname + encodeShare(form);
     try {
       await navigator.clipboard.writeText(url);
       setShared(true);
@@ -141,11 +144,16 @@ export default function Home() {
     const n = reading?.navamsa;
     if (!n?.planetPlacements) return [];
     return n.planetPlacements
-      .filter((p: any) => typeof p.planetId === "number" && typeof p.signId === "number")
+      .filter(
+        (p: any) =>
+          typeof p.planetId === "number" && typeof p.signId === "number",
+      )
       .map((p: any) => ({
         planetId: p.planetId,
         house: ((p.signId - n.lagna + 12) % 12) + 1,
-        marker: n.vargottamaPlanets?.includes(p.planet) ? "Vargottama" : undefined,
+        marker: n.vargottamaPlanets?.includes(p.planet)
+          ? "Vargottama"
+          : undefined,
       }));
   }, [reading]);
 
@@ -155,61 +163,62 @@ export default function Home() {
         planetId: p.planet,
         house: p.house,
       })),
-    [chart]
+    [chart],
   );
 
   return (
     <div className="flex flex-col min-h-screen bg-night text-ola-leaf overflow-x-hidden">
       {/* Header */}
-      <header className="h-16 border-b border-ash/30 flex items-center justify-between px-4 md:px-8 bg-night/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="flex items-center gap-4">
-          <span className="font-display text-2xl font-semibold text-turmeric tracking-tight">
-            Graha
-          </span>
-          <div className="h-5 w-px bg-ash/30" />
-          <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-ash hidden md:inline">
-            Vedic Precision Instrument
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <HistoryPanel
-            entries={entries}
-            onSelect={selectHistory}
-            onRemove={remove}
-            onClear={clear}
-          />
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleShare}
-            disabled={!mutation.isSuccess}
-            title="Copy a link to this chart"
-          >
-            {shared ? (
-              <Check className="w-3.5 h-3.5 text-tulsi" />
-            ) : (
-              <Share2 className="w-3.5 h-3.5" />
-            )}
-            <span className="hidden sm:inline">{shared ? "Copied" : "Share"}</span>
-          </Button>
-        </div>
-      </header>
+      <SiteHeader
+        right={
+          <div className="flex items-center gap-2">
+            <HistoryPanel
+              entries={entries}
+              onSelect={selectHistory}
+              onRemove={remove}
+              onClear={clear}
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleShare}
+              disabled={!mutation.isSuccess}
+              title="Copy a link to this chart"
+            >
+              {shared ? (
+                <Check className="w-3.5 h-3.5 text-tulsi" />
+              ) : (
+                <Share2 className="w-3.5 h-3.5" />
+              )}
+              <span className="hidden sm:inline">
+                {shared ? "Copied" : "Share"}
+              </span>
+            </Button>
+          </div>
+        }
+      />
 
       <main className="flex-1 flex flex-col lg:flex-row">
         {/* LEFT: Birth details */}
         <aside className="w-full lg:w-[380px] xl:w-[400px] border-r border-ash/30 p-4 md:p-8 flex flex-col gap-6 bg-manuscript/40">
           <div className="flex flex-col gap-1.5">
-            <h2 className="font-display text-xl font-medium text-ola-leaf">Native Details</h2>
+            <h2 className="font-display text-xl font-medium text-ola-leaf">
+              Native Details
+            </h2>
             <p className="font-sans text-sm text-ash leading-relaxed">
               Sidereal calculation · Lahiri Ayanamsa · Placidus houses
             </p>
           </div>
 
-          <BirthForm onSubmit={handleSubmit} pending={mutation.isPending} initial={form} />
+          <BirthForm
+            onSubmit={handleSubmit}
+            pending={mutation.isPending}
+            initial={form}
+          />
 
           <p className="text-[11px] text-ash/70 leading-relaxed">
-            Charts are computed on the fly with the Swiss Ephemeris. No account needed;
-            recent charts are stored only in your browser.
+            Charts are computed on the fly with the Swiss Ephemeris. No account
+            needed; recent charts are stored only in your browser.
           </p>
         </aside>
 
@@ -220,7 +229,11 @@ export default function Home() {
             <div className="w-full max-w-[480px] mx-auto lg:mx-0">
               {/* Chart kind toggle */}
               <div className="flex items-center justify-between mb-3 border-b border-ash/20 pb-2">
-                <div className="flex items-center gap-1" role="tablist" aria-label="Chart type">
+                <div
+                  className="flex items-center gap-1"
+                  role="tablist"
+                  aria-label="Chart type"
+                >
                   {(
                     [
                       { id: "d1", label: "D1 Rasi" },
@@ -237,7 +250,7 @@ export default function Home() {
                         "font-display text-sm px-2 py-0.5 transition border-b-2",
                         chartKind === k.id
                           ? "text-turmeric border-turmeric"
-                          : "text-ash border-transparent hover:text-ola-leaf disabled:opacity-40"
+                          : "text-ash border-transparent hover:text-ola-leaf disabled:opacity-40",
                       )}
                     >
                       {k.label}
@@ -249,13 +262,19 @@ export default function Home() {
 
               {mutation.data && chart ? (
                 <VedicChart
-                  lagnaSign={chartKind === "d1" ? lagnaSign : reading?.navamsa?.lagna ?? lagnaSign}
+                  lagnaSign={
+                    chartKind === "d1"
+                      ? lagnaSign
+                      : (reading?.navamsa?.lagna ?? lagnaSign)
+                  }
                   planets={chartKind === "d1" ? d1Planets : d9Planets}
                   chartLabel={chartKind === "d1" ? "D1 Rasi" : "D9 Navamsa"}
                   animate={!reducedMotion}
                 />
               ) : (
-                <ChartPreview label={chartKind === "d1" ? "D1 Rasi" : "D9 Navamsa"} />
+                <ChartPreview
+                  label={chartKind === "d1" ? "D1 Rasi" : "D9 Navamsa"}
+                />
               )}
 
               {/* Mini readout */}
@@ -264,7 +283,11 @@ export default function Home() {
                   Lagna:{" "}
                   <span className="text-turmeric">
                     {chart
-                      ? ZODIAC_NAMES[chartKind === "d1" ? lagnaSign : reading?.navamsa?.lagna]?.en
+                      ? ZODIAC_NAMES[
+                          chartKind === "d1"
+                            ? lagnaSign
+                            : reading?.navamsa?.lagna
+                        ]?.en
                       : "—"}
                   </span>
                 </span>
@@ -280,17 +303,19 @@ export default function Home() {
             {/* Intro / empty state */}
             <div className="w-full flex flex-col gap-6">
               <div className="flex flex-col gap-2 border-b border-ash/20 pb-4">
-                <h3 className="font-display text-xl text-ola-leaf">Instrument Reading</h3>
+                <h3 className="font-display text-xl text-ola-leaf">
+                  Instrument Reading
+                </h3>
                 {!mutation.data ? (
                   <p className="font-sans text-sm text-ash leading-relaxed">
-                    Enter a birth date, time, and place to generate a Rasi chart, dasa
-                    timeline, house analysis, and remedies.
+                    Enter a birth date, time, and place to generate a Rasi
+                    chart, dasa timeline, house analysis, and remedies.
                   </p>
                 ) : (
                   <p className="font-sans text-sm text-ash leading-relaxed">
-                    Calculations complete — {chart?.name || "chart"} ready. Explore the
-                    tabs below for planetary dignities, yogas, Navamsa, daily transits,
-                    and remedies.
+                    Calculations complete — {chart?.name || "chart"} ready.
+                    Explore the tabs below for planetary dignities, yogas,
+                    Navamsa, daily transits, and remedies.
                   </p>
                 )}
               </div>
@@ -312,7 +337,8 @@ export default function Home() {
                   <div>
                     <p className="font-medium text-sm">Computation failed</p>
                     <p className="text-sm text-muted-foreground">
-                      {(mutation.error as Error)?.message || "Something went wrong"}
+                      {(mutation.error as Error)?.message ||
+                        "Something went wrong"}
                     </p>
                   </div>
                 </motion.div>
@@ -356,6 +382,32 @@ export default function Home() {
                     activeTab={activeTab}
                     onTabChange={setActiveTab}
                   />
+
+                  {/* Cross-link: kundli matching with a partner */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="flex flex-col sm:flex-row items-center justify-between gap-3 rounded-xl border border-border bg-card/60 p-4"
+                  >
+                    <div className="text-sm text-muted-foreground min-w-0">
+                      <p className="text-ola-leaf font-medium flex items-center gap-1.5">
+                        <Heart className="w-4 h-4 text-sindoor" />
+                        Check compatibility with a partner
+                      </p>
+                      <p className="text-xs mt-0.5">
+                        Guna Milan — 36-point Ashtakoota, Kuja dosha and Lagna compatibility,
+                        following classical Sinhala practice.
+                      </p>
+                    </div>
+                    <Link
+                      href="/match"
+                      className="inline-flex items-center gap-1.5 shrink-0 rounded-lg bg-primary text-primary-foreground px-3.5 py-2 text-xs font-medium hover:bg-primary/80 transition"
+                    >
+                      Kundli match
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </motion.div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -363,22 +415,7 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="border-t border-ash/20 mt-8 py-8 text-center font-sans text-sm">
-        <div className="container max-w-6xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-2">
-          <p className="text-xs text-muted-foreground">Graha — Vedic Astrology Engine</p>
-          <p className="text-xs text-muted-foreground">
-            Made with <span className="text-sindoor">♥</span> by{" "}
-            <a
-              href="https://supunsathsara.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline transition"
-            >
-              chutte
-            </a>
-          </p>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

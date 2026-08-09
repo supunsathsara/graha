@@ -76,12 +76,16 @@ export function HouseExplorer({
                 "text-left rounded-lg border p-2.5 transition-all",
                 active
                   ? "border-turmeric/70 bg-turmeric/5 shadow-[0_0_0_1px_hsl(var(--turmeric)/0.3)]"
-                  : "border-border bg-secondary/40 hover:border-primary/40"
+                  : "border-border bg-secondary/40 hover:border-primary/40",
               )}
             >
               <div className="flex items-center justify-between">
-                <span className="font-data text-[10px] text-ash">{h.number}</span>
-                <span className="font-data text-[10px] text-ash/70">{ZODIAC_GLYPHS[h.sign]}</span>
+                <span className="font-data text-[10px] text-ash">
+                  {h.number}
+                </span>
+                <span className="font-data text-[10px] text-ash/70">
+                  {ZODIAC_GLYPHS[h.sign]}
+                </span>
               </div>
               <div className="mt-1">
                 <p className="font-data text-sm leading-none text-turmeric flex flex-wrap gap-x-1">
@@ -119,25 +123,37 @@ export function HouseExplorer({
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="font-display text-base">
-                House {house.number} — {HOUSE_SIGNIFICANCE[house.number] ?? "Matters"}
+                House {house.number} —{" "}
+                {HOUSE_SIGNIFICANCE[house.number] ?? "Matters"}
               </p>
               <p className="text-sm text-muted-foreground mt-0.5">
-                Sign: <span className="text-foreground">{ZODIAC_EN[house.sign]}</span> ·{" "}
-                Lord: <span className="text-foreground">{PLANET_NAME_BY_ID[SIGN_LORDS[house.sign]] ?? PLANET_NAME_BY_ID[house.lord]}</span>
+                Sign:{" "}
+                <span className="text-foreground">{ZODIAC_EN[house.sign]}</span>{" "}
+                · Lord:{" "}
+                <span className="text-foreground">
+                  {PLANET_NAME_BY_ID[SIGN_LORDS[house.sign]] ??
+                    PLANET_NAME_BY_ID[house.lord]}
+                </span>
               </p>
             </div>
             <span className="font-mono text-[10px] text-ash uppercase tracking-wider">
-              {house.startLongitude.toFixed(2)}° → {house.endLongitude.toFixed(2)}°
+              {house.startLongitude.toFixed(2)}° →{" "}
+              {house.endLongitude.toFixed(2)}°
             </span>
           </div>
 
           {selectedPlanets.length > 0 ? (
             <div className="mt-3 grid sm:grid-cols-2 gap-2">
               {selectedPlanets.map((p) => (
-                <div key={p.planet} className="rounded-lg bg-secondary/50 border border-border p-2.5">
+                <div
+                  key={p.planet}
+                  className="rounded-lg bg-secondary/50 border border-border p-2.5"
+                >
                   <p className="text-sm font-medium">
                     {PLANET_GLYPHS[p.planet]} {p.name?.en}{" "}
-                    {p.isRetrograde && <span className="text-yellow-400">↩</span>}
+                    {p.isRetrograde && (
+                      <span className="text-yellow-400">↩</span>
+                    )}
                   </p>
                   <p className="text-xs text-muted-foreground font-mono mt-0.5">
                     {ZODIAC_EN[p.sign]} {p.signDegree.toFixed(2)}°
@@ -147,8 +163,9 @@ export function HouseExplorer({
             </div>
           ) : (
             <p className="mt-3 text-sm text-muted-foreground">
-              No planets occupy this house — its matters are directed by its lord
-              ({PLANET_NAME_BY_ID[house.lord]}) placed elsewhere in the chart.
+              No planets occupy this house — its matters are directed by its
+              lord ({PLANET_NAME_BY_ID[house.lord]}) placed elsewhere in the
+              chart.
             </p>
           )}
 

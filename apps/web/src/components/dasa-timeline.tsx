@@ -54,7 +54,8 @@ export function DasaTimeline({ dasa }: { dasa: DasaLike | null | undefined }) {
     );
   }
 
-  const totalMonths = dasa.subPeriods.reduce((acc, s) => acc + s.totalMonths, 0) || 1;
+  const totalMonths =
+    dasa.subPeriods.reduce((acc, s) => acc + s.totalMonths, 0) || 1;
 
   return (
     <div className="space-y-5">
@@ -84,7 +85,10 @@ export function DasaTimeline({ dasa }: { dasa: DasaLike | null | undefined }) {
           initial={{ width: 0 }}
           animate={{ width: "100%" }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className={cn("h-full rounded-full", DASA_COLORS[dasa.lord] ?? "bg-primary")}
+          className={cn(
+            "h-full rounded-full",
+            DASA_COLORS[dasa.lord] ?? "bg-primary",
+          )}
         />
       </div>
 
@@ -106,7 +110,7 @@ export function DasaTimeline({ dasa }: { dasa: DasaLike | null | undefined }) {
                 style={{ width: `${pct}%` }}
                 className={cn(
                   "h-full border-r border-background/40 last:border-r-0",
-                  DASA_COLORS[s.lord] ?? "bg-primary/70"
+                  DASA_COLORS[s.lord] ?? "bg-primary/70",
                 )}
               />
             );
@@ -115,8 +119,16 @@ export function DasaTimeline({ dasa }: { dasa: DasaLike | null | undefined }) {
         {/* legend */}
         <div className="flex flex-wrap gap-x-4 gap-y-1.5">
           {dasa.subPeriods.map((s, i) => (
-            <span key={i} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <span className={cn("size-2 rounded-full", DASA_COLORS[s.lord] ?? "bg-primary/70")} />
+            <span
+              key={i}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground"
+            >
+              <span
+                className={cn(
+                  "size-2 rounded-full",
+                  DASA_COLORS[s.lord] ?? "bg-primary/70",
+                )}
+              />
               {PLANET_GLYPHS[s.lord] ?? ""} {s.lordName.en}
               <span className="font-mono text-[10px] text-ash">
                 {s.startDate}–{s.endDate}
@@ -128,9 +140,13 @@ export function DasaTimeline({ dasa }: { dasa: DasaLike | null | undefined }) {
 
       {/* Semantic note */}
       <p className="text-xs text-muted-foreground leading-relaxed">
-        Currently in the <span className="text-foreground font-medium">Mahadasa of {dasa.lordName.en}</span>.
-        Sub-periods activate the themes of their ruling planet for their duration —
-        the dominant planetary period shapes career, relationships, and personal focus.
+        Currently in the{" "}
+        <span className="text-foreground font-medium">
+          Mahadasa of {dasa.lordName.en}
+        </span>
+        . Sub-periods activate the themes of their ruling planet for their
+        duration — the dominant planetary period shapes career, relationships,
+        and personal focus.
       </p>
     </div>
   );

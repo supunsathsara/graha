@@ -20,14 +20,15 @@ async function getLogger() {
   }
 
   try {
-    const { Logger, LogLevel, SimpleFetchTransport } = await import("@axiomhq/logging");
+    const { Logger, LogLevel, SimpleFetchTransport } =
+      await import("@axiomhq/logging");
 
     const transport = new SimpleFetchTransport({
       input: AXIOM_INGEST_URL,
       init: {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
           "User-Agent": "graha/1.0",
         },
@@ -51,12 +52,19 @@ export async function logRequest(
   path: string,
   status: number,
   duration: number,
-  extras?: Record<string, any>
+  extras?: Record<string, any>,
 ): Promise<void> {
   try {
     const log = await getLogger();
     if (!log) return;
-    log.info(`[Request] ${method} ${path}`, { type: "request", method, path, status, duration, ...extras });
+    log.info(`[Request] ${method} ${path}`, {
+      type: "request",
+      method,
+      path,
+      status,
+      duration,
+      ...extras,
+    });
     await log.flush();
   } catch {}
 }
@@ -67,12 +75,20 @@ export async function logChartComputation(
   latitude: number,
   longitude: number,
   duration: number,
-  extras?: Record<string, any>
+  extras?: Record<string, any>,
 ): Promise<void> {
   try {
     const log = await getLogger();
     if (!log) return;
-    log.info("[Chart] Computation", { type: "chart", birthDate, birthTime, latitude, longitude, duration, ...extras });
+    log.info("[Chart] Computation", {
+      type: "chart",
+      birthDate,
+      birthTime,
+      latitude,
+      longitude,
+      duration,
+      ...extras,
+    });
     await log.flush();
   } catch {}
 }
@@ -82,12 +98,19 @@ export async function logAIInteraction(
   mode: string,
   duration: number,
   success: boolean,
-  extras?: Record<string, any>
+  extras?: Record<string, any>,
 ): Promise<void> {
   try {
     const log = await getLogger();
     if (!log) return;
-    log.info("[AI] Interaction", { type: "ai", aiProvider: provider, aiMode: mode, duration, success, ...extras });
+    log.info("[AI] Interaction", {
+      type: "ai",
+      aiProvider: provider,
+      aiMode: mode,
+      duration,
+      success,
+      ...extras,
+    });
     await log.flush();
   } catch {}
 }
@@ -95,7 +118,7 @@ export async function logAIInteraction(
 export async function logError(
   message: string,
   error?: unknown,
-  extras?: Record<string, any>
+  extras?: Record<string, any>,
 ): Promise<void> {
   try {
     const log = await getLogger();

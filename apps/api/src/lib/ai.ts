@@ -32,7 +32,9 @@ export function initAI(): void {
 
 function getGroqClient(): Groq {
   if (!groqClient) {
-    throw new Error("Groq client not initialized. Set GROQ_API_KEY and call initAI().");
+    throw new Error(
+      "Groq client not initialized. Set GROQ_API_KEY and call initAI().",
+    );
   }
   return groqClient;
 }
@@ -48,7 +50,9 @@ function buildChartContext(chart: BirthChart): string {
 
   // Lagna
   const lagnaName = ZODIAC_NAMES[chart.lagna.sign]?.en || "Unknown";
-  lines.push(`Ascendant (Lagna): ${lagnaName} at ${chart.lagna.degree.toFixed(2)}°`);
+  lines.push(
+    `Ascendant (Lagna): ${lagnaName} at ${chart.lagna.degree.toFixed(2)}°`,
+  );
 
   // Planets
   lines.push("\nPlanetary Positions:");
@@ -56,13 +60,15 @@ function buildChartContext(chart: BirthChart): string {
     const signName = ZODIAC_NAMES[p.sign]?.en || "Unknown";
     const retro = p.isRetrograde ? " (Retrograde)" : "";
     lines.push(
-      `  ${p.name.en}: ${signName} ${p.signDegree.toFixed(2)}° House ${p.house}${retro}`
+      `  ${p.name.en}: ${signName} ${p.signDegree.toFixed(2)}° House ${p.house}${retro}`,
     );
   }
 
   // Dasa
   if (chart.currentDasa) {
-    lines.push(`\nCurrent Dasa: ${chart.currentDasa.lordName.en} (${chart.currentDasa.startDate} – ${chart.currentDasa.endDate})`);
+    lines.push(
+      `\nCurrent Dasa: ${chart.currentDasa.lordName.en} (${chart.currentDasa.startDate} – ${chart.currentDasa.endDate})`,
+    );
   }
 
   return lines.join("\n");
@@ -107,7 +113,7 @@ Be specific to the chart positions. Mention yogas, doshas, and nakshatras.`;
 
 async function interpretWithGroq(
   chartContext: string,
-  systemPrompt: string
+  systemPrompt: string,
 ): Promise<string> {
   const groq = getGroqClient();
 
@@ -129,7 +135,7 @@ async function interpretWithGroq(
 
 async function interpretWithHuggingFace(
   chartContext: string,
-  systemPrompt: string
+  systemPrompt: string,
 ): Promise<string> {
   const hfToken = process.env.HF_TOKEN;
   if (!hfToken) {
@@ -152,7 +158,7 @@ async function interpretWithHuggingFace(
           return_full_text: false,
         },
       }),
-    }
+    },
   );
 
   if (!(response as any).ok) {
@@ -160,7 +166,9 @@ async function interpretWithHuggingFace(
     throw new Error(`Hugging Face API error: ${err.status} ${err.statusText}`);
   }
 
-  const result = (await (response as any).json()) as Array<{ generated_text: string }>;
+  const result = (await (response as any).json()) as Array<{
+    generated_text: string;
+  }>;
   return result[0]?.generated_text || "{}";
 }
 
@@ -168,7 +176,7 @@ async function interpretWithHuggingFace(
 
 export async function getChartInterpretation(
   chart: BirthChart,
-  provider: "groq" | "huggingface" | "auto" = "auto"
+  provider: "groq" | "huggingface" | "auto" = "auto",
 ): Promise<ChartInterpretation> {
   const chartContext = buildChartContext(chart);
   const systemPrompt = buildInterpretationPrompt();
@@ -176,7 +184,10 @@ export async function getChartInterpretation(
   let rawJson: string;
 
   try {
-    if (provider === "groq" || (provider === "auto" && process.env.GROQ_API_KEY)) {
+    if (
+      provider === "groq" ||
+      (provider === "auto" && process.env.GROQ_API_KEY)
+    ) {
       rawJson = await interpretWithGroq(chartContext, systemPrompt);
     } else if (
       provider === "huggingface" ||
@@ -202,7 +213,7 @@ export async function getChartInterpretation(
 
 export async function getDailyPrediction(
   chart: BirthChart,
-  provider: "groq" | "huggingface" | "auto" = "auto"
+  provider: "groq" | "huggingface" | "auto" = "auto",
 ): Promise<DailyPrediction> {
   const chartContext = buildChartContext(chart);
   const systemPrompt = buildDailyPrompt();
@@ -210,7 +221,10 @@ export async function getDailyPrediction(
   let rawJson: string;
 
   try {
-    if (provider === "groq" || (provider === "auto" && process.env.GROQ_API_KEY)) {
+    if (
+      provider === "groq" ||
+      (provider === "auto" && process.env.GROQ_API_KEY)
+    ) {
       rawJson = await interpretWithGroq(chartContext, systemPrompt);
     } else if (
       provider === "huggingface" ||
@@ -234,7 +248,9 @@ export async function getDailyPrediction(
 
 // ─── Template Fallbacks (when AI is unavailable) ────────────
 
-function generateTemplateInterpretation(chart: BirthChart): ChartInterpretation {
+function generateTemplateInterpretation(
+  chart: BirthChart,
+): ChartInterpretation {
   const lagnaName = ZODIAC_NAMES[chart.lagna.sign]?.en || "Unknown";
   const moon = chart.planets.find((p) => p.planet === 1);
   const moonSign = moon ? ZODIAC_NAMES[moon.sign]?.en : "Unknown";
@@ -260,10 +276,13 @@ function generateTemplateDailyPrediction(): DailyPrediction {
   const today = new Date().toISOString().split("T")[0];
   return {
     date: today,
-    overall: "Today is a balanced day. Focus on your priorities and avoid unnecessary conflicts. The planetary alignments support thoughtful decision-making.",
-    career: "Good day for planning and strategic thinking. Avoid impulsive decisions in professional matters.",
+    overall:
+      "Today is a balanced day. Focus on your priorities and avoid unnecessary conflicts. The planetary alignments support thoughtful decision-making.",
+    career:
+      "Good day for planning and strategic thinking. Avoid impulsive decisions in professional matters.",
     love: "Relationships require patience today. Listen more than you speak.",
-    health: "Moderate energy levels. Light exercise and proper hydration are recommended.",
+    health:
+      "Moderate energy levels. Light exercise and proper hydration are recommended.",
     auspiciousTime: null,
     inauspiciousTime: null,
   };
@@ -290,8 +309,10 @@ function getSignTraits(sign: ZodiacSign): string {
 function getTemplateStrengths(chart: BirthChart): string[] {
   const strengths: string[] = [];
   for (const p of chart.planets) {
-    if (p.dignity === "exalted") strengths.push(`${p.name.en} is exalted — strong ${p.name.en} energy`);
-    if (p.house === 1 || p.house === 10) strengths.push(`${p.name.en} in house ${p.house} — prominent influence`);
+    if (p.dignity === "exalted")
+      strengths.push(`${p.name.en} is exalted — strong ${p.name.en} energy`);
+    if (p.house === 1 || p.house === 10)
+      strengths.push(`${p.name.en} in house ${p.house} — prominent influence`);
   }
   if (strengths.length === 0) strengths.push("Balanced planetary distribution");
   return strengths.slice(0, 4);
@@ -300,9 +321,16 @@ function getTemplateStrengths(chart: BirthChart): string[] {
 function getTemplateChallenges(chart: BirthChart): string[] {
   const challenges: string[] = [];
   for (const p of chart.planets) {
-    if (p.dignity === "debilitated") challenges.push(`${p.name.en} is debilitated — requires conscious effort`);
-    if (p.house === 6 || p.house === 8 || p.house === 12) challenges.push(`${p.name.en} in house ${p.house} — area of karmic challenge`);
+    if (p.dignity === "debilitated")
+      challenges.push(
+        `${p.name.en} is debilitated — requires conscious effort`,
+      );
+    if (p.house === 6 || p.house === 8 || p.house === 12)
+      challenges.push(
+        `${p.name.en} in house ${p.house} — area of karmic challenge`,
+      );
   }
-  if (challenges.length === 0) challenges.push("No major challenging aspects detected");
+  if (challenges.length === 0)
+    challenges.push("No major challenging aspects detected");
   return challenges.slice(0, 4);
 }

@@ -42,7 +42,7 @@ export function useChartHistory() {
               p.birthTime === form.birthTime &&
               p.latitude === form.latitude &&
               p.longitude === form.longitude
-            )
+            ),
         ),
       ].slice(0, MAX_ENTRIES);
       try {
@@ -96,13 +96,17 @@ export function HistoryPanel({
       >
         <History className="w-3.5 h-3.5" />
         Recent charts
-        <span className="font-mono text-[10px] text-ash">({entries.length})</span>
+        <span className="font-mono text-[10px] text-ash">
+          ({entries.length})
+        </span>
       </button>
 
       {open && (
         <div className="absolute z-40 top-full mt-1 right-0 w-72 bg-card border border-border rounded-lg shadow-xl overflow-hidden">
           <div className="flex items-center justify-between px-3 py-2 border-b border-border">
-            <span className="text-xs font-medium text-muted-foreground">Saved charts</span>
+            <span className="text-xs font-medium text-muted-foreground">
+              Saved charts
+            </span>
             <button
               type="button"
               onClick={onClear}

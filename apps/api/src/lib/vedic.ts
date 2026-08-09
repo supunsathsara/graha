@@ -8,7 +8,11 @@
  *   - Dasa balance at birth
  *   - Muhurta (electional astrology)
  */
-import type { BirthChart, PlanetaryPosition, ZodiacSign } from "../types/chart.js";
+import type {
+  BirthChart,
+  PlanetaryPosition,
+  ZodiacSign,
+} from "../types/chart.js";
 import { ZODIAC_NAMES, PLANET_NAMES } from "../types/chart.js";
 
 // ─── Yogas (Beneficial Planetary Combinations) ──────────────
@@ -33,15 +37,15 @@ export function detectYogas(chart: BirthChart): Yoga[] {
     const moonInKendra = [1, 4, 7, 10].includes(moon.house);
     if (jupiterInKendra && moonInKendra) {
       yogas.push({
-          name: "Gaja Kesari Yoga",
-          nameSi: "ගජ කේසරී යෝගය",
-          description:
-            "A royal yoga formed by Jupiter and Moon in a kendra from each other. Brings wisdom, wealth, and reputation.",
-          planets: ["Jupiter", "Moon"],
-          strength: "strong",
-        });
-      }
+        name: "Gaja Kesari Yoga",
+        nameSi: "ගජ කේසරී යෝගය",
+        description:
+          "A royal yoga formed by Jupiter and Moon in a kendra from each other. Brings wisdom, wealth, and reputation.",
+        planets: ["Jupiter", "Moon"],
+        strength: "strong",
+      });
     }
+  }
 
   // Dhana Yoga: Lord of the 5th and 9th (trine lords) in kendra or trikona
   const trineLords = getLordsInHouses(chart, [5, 9]);
@@ -49,7 +53,8 @@ export function detectYogas(chart: BirthChart): Yoga[] {
     yogas.push({
       name: "Dhana Yoga",
       nameSi: "ධන යෝගය",
-      description: "Formed by auspicious planets in trine houses. Indicates wealth and prosperity.",
+      description:
+        "Formed by auspicious planets in trine houses. Indicates wealth and prosperity.",
       planets: trineLords.map((p) => p.name.en),
       strength: "moderate",
     });
@@ -61,7 +66,8 @@ export function detectYogas(chart: BirthChart): Yoga[] {
     yogas.push({
       name: "Raja Yoga",
       nameSi: "රාජ යෝගය",
-      description: "Powerful yoga indicating leadership, authority, and royal status.",
+      description:
+        "Powerful yoga indicating leadership, authority, and royal status.",
       planets: kendraLords.map((p) => p.name.en),
       strength: "moderate",
     });
@@ -72,13 +78,14 @@ export function detectYogas(chart: BirthChart): Yoga[] {
   if (sun) {
     const sunHouse = sun.house;
     const in2nd = chart.planets.filter(
-      (p) => (p.house === (sunHouse % 12) + 1) && [2, 3, 5].includes(p.planet)
+      (p) => p.house === (sunHouse % 12) + 1 && [2, 3, 5].includes(p.planet),
     );
     if (in2nd.length > 0) {
       yogas.push({
         name: "Vesi Yoga",
         nameSi: "වේසි යෝගය",
-        description: "Benefic planets in 2nd from Sun. Brings wealth, intelligence, and good fortune.",
+        description:
+          "Benefic planets in 2nd from Sun. Brings wealth, intelligence, and good fortune.",
         planets: in2nd.map((p) => p.name.en),
         strength: "weak",
       });
@@ -118,7 +125,8 @@ export function detectDoshas(chart: BirthChart): Dosha[] {
       doshas.push({
         name: "Mangal Cancellation",
         nameSi: "මංගල නිවාරණය",
-        description: "Mars in upachaya house — Mangalik Dosha is canceled or reduced.",
+        description:
+          "Mars in upachaya house — Mangalik Dosha is canceled or reduced.",
         present: false,
         severity: "none",
       });
@@ -137,7 +145,8 @@ export function detectDoshas(chart: BirthChart): Dosha[] {
       doshas.push({
         name: "Kaal Sarpa Yoga",
         nameSi: "කාල සර්ප යෝගය",
-        description: "All planets between Rahu and Ketu. Creates a mixed karmic pattern of challenges and potential breakthroughs.",
+        description:
+          "All planets between Rahu and Ketu. Creates a mixed karmic pattern of challenges and potential breakthroughs.",
         present: true,
         severity: "high",
       });
@@ -153,7 +162,8 @@ export function detectDoshas(chart: BirthChart): Dosha[] {
       doshas.push({
         name: "Pitri Dosha",
         nameSi: "පිතෘ දෝෂය",
-        description: "Sun-Venus conjunction. May indicate challenges in family relationships.",
+        description:
+          "Sun-Venus conjunction. May indicate challenges in family relationships.",
         present: true,
         severity: "low",
       });
@@ -165,7 +175,11 @@ export function detectDoshas(chart: BirthChart): Dosha[] {
 
 // ─── Muhurta (Electional Astrology) ─────────────────────────
 
-export function calculateMuhurta(date: Date, latitude: number, longitude: number) {
+export function calculateMuhurta(
+  date: Date,
+  latitude: number,
+  longitude: number,
+) {
   // Simplified Muhurta calculation
   // In practice, this checks: tithi, vara, nakshatra, yoga, karana
   const dayOfWeek = date.getDay();
@@ -193,13 +207,13 @@ function getRahuKalam(date: Date, _lat: number, _lon: number) {
   const day = date.getDay();
   // Rahu Kalam periods (in 24h format)
   const periods: Record<number, [number, number]> = {
-    0: [7.5, 9],    // Sunday
-    1: [15, 16.5],  // Monday
-    2: [12, 13.5],  // Tuesday
-    3: [13.5, 15],  // Wednesday
-    4: [16.5, 18],  // Thursday
-    5: [10.5, 12],  // Friday
-    6: [9, 10.5],   // Saturday
+    0: [7.5, 9], // Sunday
+    1: [15, 16.5], // Monday
+    2: [12, 13.5], // Tuesday
+    3: [13.5, 15], // Wednesday
+    4: [16.5, 18], // Thursday
+    5: [10.5, 12], // Friday
+    6: [9, 10.5], // Saturday
   };
   const period = periods[day] || [0, 0];
   return `${formatHour(period[0])} – ${formatHour(period[1])}`;
@@ -254,7 +268,10 @@ function getBadForDay(day: number): string[] {
 
 // ─── Transit Calculator ─────────────────────────────────────
 
-export function calculateTransits(chart: BirthChart, currentPlanets: PlanetaryPosition[]): string[] {
+export function calculateTransits(
+  chart: BirthChart,
+  currentPlanets: PlanetaryPosition[],
+): string[] {
   const transits: string[] = [];
 
   for (const current of currentPlanets) {
@@ -264,7 +281,7 @@ export function calculateTransits(chart: BirthChart, currentPlanets: PlanetaryPo
     const aspect = getAspect(natal.longitude, current.longitude);
     if (aspect) {
       transits.push(
-        `${current.name.en} transiting — ${aspect} aspect to natal ${natal.name.en}`
+        `${current.name.en} transiting — ${aspect} aspect to natal ${natal.name.en}`,
       );
     }
   }
@@ -276,7 +293,8 @@ function getAspect(natalLong: number, transitLong: number): string | null {
   const diff = Math.abs(transitLong - natalLong) % 360;
   const orb = 6; // allowable orb in degrees
 
-  if (Math.abs(diff - 0) < orb || Math.abs(diff - 360) < orb) return "conjunction";
+  if (Math.abs(diff - 0) < orb || Math.abs(diff - 360) < orb)
+    return "conjunction";
   if (Math.abs(diff - 60) < orb) return "sextile (60°)";
   if (Math.abs(diff - 90) < orb) return "square (90°)";
   if (Math.abs(diff - 120) < orb) return "trine (120°)";
@@ -286,7 +304,10 @@ function getAspect(natalLong: number, transitLong: number): string | null {
 
 // ─── Internal Helpers ───────────────────────────────────────
 
-function getLordsInHouses(chart: BirthChart, houses: number[]): PlanetaryPosition[] {
+function getLordsInHouses(
+  chart: BirthChart,
+  houses: number[],
+): PlanetaryPosition[] {
   return chart.planets.filter((p) => houses.includes(p.house));
 }
 

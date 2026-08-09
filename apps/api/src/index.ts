@@ -31,6 +31,8 @@ import { secureHeaders } from "hono/secure-headers";
 import { chartRouter } from "./routes/chart.js";
 import { predictionRouter } from "./routes/prediction.js";
 import { profileRouter } from "./routes/profile.js";
+import { matchRouter } from "./routes/match.js";
+import { panchangaRouter } from "./routes/panchanga.js";
 import { logRequest, logError } from "./lib/logger.js";
 import { rateLimit } from "./lib/ratelimit.js";
 
@@ -58,12 +60,19 @@ app.use("*", async (c, next) => {
 // ─── Rate Limiting ───────────────────────────────────────────
 app.use("*", rateLimit);
 
-app.use("*", cors({
-  origin: ["http://localhost:3000", "http://localhost:5173", "https://*.vercel.app"],
-  allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowHeaders: ["Content-Type", "Authorization", "X-Graha-Secret"],
-  credentials: true,
-}));
+app.use(
+  "*",
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:5173",
+      "https://*.vercel.app",
+    ],
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization", "X-Graha-Secret"],
+    credentials: true,
+  }),
+);
 app.use("*", logger());
 app.use("*", secureHeaders());
 
@@ -74,7 +83,9 @@ app.use("*", async (c, next) => {
   const duration = Date.now() - start;
   if (c.req.path === "/health") return;
   if (c.res) {
-    logRequest(c.req.method, c.req.path, c.res.status, duration).catch(() => {});
+    logRequest(c.req.method, c.req.path, c.res.status, duration).catch(
+      () => {},
+    );
   }
 });
 
@@ -82,6 +93,8 @@ app.use("*", async (c, next) => {
 app.route("/api/chart", chartRouter);
 app.route("/api/prediction", predictionRouter);
 app.route("/api/profile", profileRouter);
+app.route("/api/match", matchRouter);
+app.route("/api/panchanga", panchangaRouter);
 
 // ─── Health Check ───────────────────────────────────────────
 app.get("/health", (c) => {
@@ -108,6 +121,8 @@ app.get("/", (c) => {
       "POST /api/chart/compute": "Compute a birth chart",
       "POST /api/prediction/interpret": "Full chart reading + optional AI",
       "POST /api/prediction/daily": "Daily prediction",
+      "POST /api/match/compute": "Guna Milan matchmaking (36-point Ashtakoota)",
+      "GET /api/panchanga": "Sinhala almanac — Rahu/Yama/Gulika Kala, B.E. date",
       "POST /api/profile/create": "Create user profile",
     },
   });

@@ -77,8 +77,16 @@ export interface PlanetaryPosition {
   house: number;
   nakshatra: string;
   nakshatraLord: string;
+  nakshatraPada: number;
   isRetrograde: boolean;
-  dignity: "exalted" | "moolatrikona" | "own" | "friendly" | "neutral" | "enemy" | "debilitated";
+  dignity:
+    | "exalted"
+    | "moolatrikona"
+    | "own"
+    | "friendly"
+    | "neutral"
+    | "enemy"
+    | "debilitated";
 }
 
 // ─── Houses ──────────────────────────────────────────────────
@@ -145,6 +153,66 @@ export interface ChartInterpretation {
   challengingPlanets: string[];
 }
 
+// ─── Nakshatras (27 lunar mansions) ──────────────────────────
+export const NAKSHATRA_NAMES: Record<string, { en: string; si: string }> = {
+  Ashwini: { en: "Ashwini", si: "අස්විද" },
+  Bharani: { en: "Bharani", si: "බෙරණ" },
+  Krittika: { en: "Krittika", si: "කැති" },
+  Rohini: { en: "Rohini", si: "රේහන" },
+  Mrigashira: { en: "Mrigashira", si: "මුවසිරස" },
+  Ardra: { en: "Ardra", si: "අද" },
+  Punarvasu: { en: "Punarvasu", si: "පුනර්වස" },
+  Pushya: { en: "Pushya", si: "පුෂ" },
+  Ashlesha: { en: "Ashlesha", si: "අස්ලිය" },
+  Magha: { en: "Magha", si: "මා" },
+  "Purva Phalguni": { en: "Purva Phalguni", si: "පුර පලග" },
+  "Uttara Phalguni": { en: "Uttara Phalguni", si: "උතුරු පලග" },
+  Hasta: { en: "Hasta", si: "හත" },
+  Chitra: { en: "Chitra", si: "සිත" },
+  Swati: { en: "Swati", si: "ස්වාති" },
+  Vishakha: { en: "Vishakha", si: "විසා" },
+  Anuradha: { en: "Anuradha", si: "අනුරාධ" },
+  Jyeshtha: { en: "Jyeshtha", si: "ජෙෂ්ඨ" },
+  Mula: { en: "Mula", si: "මුල" },
+  "Purva Ashadha": { en: "Purva Ashadha", si: "පුර ඇසළ" },
+  "Uttara Ashadha": { en: "Uttara Ashadha", si: "උතුරු ඇසළ" },
+  Shravana: { en: "Shravana", si: "සවන" },
+  Dhanishta: { en: "Dhanishta", si: "දෙනට" },
+  Shatabhisha: { en: "Shatabhisha", si: "සත භිෂ" },
+  "Purva Bhadrapada": { en: "Purva Bhadrapada", si: "පුර බඳුරු" },
+  "Uttara Bhadrapada": { en: "Uttara Bhadrapada", si: "උතුරු බඳුරු" },
+  Revati: { en: "Revati", si: "රේවති" },
+};
+
+// ─── Sinhala calendar ────────────────────────────────────────
+// Buddhist Era (B.E.) = Gregorian year + 543.
+export const SINHALA_MONTHS: Record<number, { en: string; si: string }> = {
+  1: { en: "Duruthu", si: "දුරුතු" },
+  2: { en: "Navam", si: "නවම්" },
+  3: { en: "Madin", si: "මැදින්" },
+  4: { en: "Bak", si: "බක්" },
+  5: { en: "Vesak", si: "වෙසක්" },
+  6: { en: "Poson", si: "පොසොන්" },
+  7: { en: "Esala", si: "ඇසළ" },
+  8: { en: "Nikini", si: "නිකිණි" },
+  9: { en: "Binara", si: "බිනර" },
+  10: { en: "Vap", si: "වප්" },
+  11: { en: "Il", si: "ඉල්" },
+  12: { en: "Unduvap", si: "උඳුවප්" },
+};
+
+export const SINHALA_WEEKDAYS: Record<number, { en: string; si: string }> = {
+  0: { en: "Sunday", si: "ඉරිදා" },
+  1: { en: "Monday", si: "සඳුදා" },
+  2: { en: "Tuesday", si: "අඟහරුවාදා" },
+  3: { en: "Wednesday", si: "බදාදා" },
+  4: { en: "Thursday", si: "බ්‍රහස්පතින්දා" },
+  5: { en: "Friday", si: "සිකුරාදා" },
+  6: { en: "Saturday", si: "සෙනසුරාදා" },
+};
+
+// ─── Nakshatras (27 lunar mansions) ──────────────────────────
+
 export interface DailyPrediction {
   date: string;
   overall: string;
@@ -194,20 +262,35 @@ export interface CompiledReading {
   currentDasa: string | null;
   strengths: string[];
   challenges: string[];
-  remedies: { planet: string; gem: string | null; mantra: string; action: string }[];
+  remedies: {
+    planet: string;
+    gem: string | null;
+    mantra: string;
+    action: string;
+  }[];
   favorablePlanets: string[];
   challengingPlanets: string[];
   navamsa: NavamsaData | null;
   aspects: AspectData | null;
   planetaryDignities: PlanetaryDignity[];
-  panchamahapurushaYogas: { name: string; planet: string; description: string }[];
+  panchamahapurushaYogas: {
+    name: string;
+    planet: string;
+    description: string;
+  }[];
 }
 
 export interface NavamsaData {
   lagna: number;
   vargottamaPlanets: string[];
   marriageAnalysis: string[];
-  planetPlacements: { planet: string; planetId?: number; sign: string; signId?: number; interpretation: string }[];
+  planetPlacements: {
+    planet: string;
+    planetId?: number;
+    sign: string;
+    signId?: number;
+    interpretation: string;
+  }[];
 }
 
 export interface AspectData {

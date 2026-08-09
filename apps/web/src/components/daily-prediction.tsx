@@ -5,6 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { CalendarDays, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PanchangaPanel } from "@/components/panchanga-panel";
 import type { BirthFormData } from "@/components/birth-form";
 
 interface DailyPredictionData {
@@ -49,11 +50,17 @@ export function DailyPrediction({ form }: { form: BirthFormData }) {
 
   return (
     <div className="space-y-5">
+      {/* Sinhala daily almanac — computed from real sunrise/sunset */}
+      <PanchangaPanel form={form} />
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h4 className="font-display text-base">Today&apos;s transit reading</h4>
+          <h4 className="font-display text-base">
+            Today&apos;s transit reading
+          </h4>
           <p className="text-sm text-muted-foreground">
-            Transit-based guidance using current planetary positions against your birth chart.
+            Transit-based guidance using current planetary positions against
+            your birth chart.
           </p>
         </div>
         <Button
@@ -75,7 +82,8 @@ export function DailyPrediction({ form }: { form: BirthFormData }) {
         <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 flex items-start gap-2 text-sm">
           <AlertCircle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
           <span className="text-muted-foreground">
-            {(mutation.error as Error)?.message || "Failed to load daily prediction"}
+            {(mutation.error as Error)?.message ||
+              "Failed to load daily prediction"}
           </span>
         </div>
       )}
@@ -90,7 +98,10 @@ export function DailyPrediction({ form }: { form: BirthFormData }) {
             className="space-y-3"
           >
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-3 w-full bg-secondary animate-pulse rounded" />
+              <div
+                key={i}
+                className="h-3 w-full bg-secondary animate-pulse rounded"
+              />
             ))}
           </motion.div>
         )}
@@ -107,25 +118,50 @@ export function DailyPrediction({ form }: { form: BirthFormData }) {
               {result.prediction.date}
             </p>
 
-            <DailySection title="Overall" text={result.prediction.overall} tone="neutral" />
+            <DailySection
+              title="Overall"
+              text={result.prediction.overall}
+              tone="neutral"
+            />
             <div className="grid md:grid-cols-2 gap-4">
-              <DailySection title="Career" text={result.prediction.career} tone="good" />
-              <DailySection title="Love & relationships" text={result.prediction.love} tone="good" />
+              <DailySection
+                title="Career"
+                text={result.prediction.career}
+                tone="good"
+              />
+              <DailySection
+                title="Love & relationships"
+                text={result.prediction.love}
+                tone="good"
+              />
             </div>
-            <DailySection title="Health" text={result.prediction.health} tone="warn" />
+            <DailySection
+              title="Health"
+              text={result.prediction.health}
+              tone="warn"
+            />
 
-            {(result.prediction.auspiciousTime || result.prediction.inauspiciousTime) && (
+            {(result.prediction.auspiciousTime ||
+              result.prediction.inauspiciousTime) && (
               <div className="grid grid-cols-2 gap-2">
                 {result.prediction.auspiciousTime && (
                   <div className="rounded-lg border border-tulsi/30 bg-tulsi/5 p-3">
-                    <p className="text-xs text-tulsi uppercase tracking-wider font-medium">Auspicious time</p>
-                    <p className="text-sm mt-0.5 font-mono">{result.prediction.auspiciousTime}</p>
+                    <p className="text-xs text-tulsi uppercase tracking-wider font-medium">
+                      Auspicious time
+                    </p>
+                    <p className="text-sm mt-0.5 font-mono">
+                      {result.prediction.auspiciousTime}
+                    </p>
                   </div>
                 )}
                 {result.prediction.inauspiciousTime && (
                   <div className="rounded-lg border border-sindoor/30 bg-sindoor/5 p-3">
-                    <p className="text-xs text-sindoor uppercase tracking-wider font-medium">Avoid</p>
-                    <p className="text-sm mt-0.5 font-mono">{result.prediction.inauspiciousTime}</p>
+                    <p className="text-xs text-sindoor uppercase tracking-wider font-medium">
+                      Avoid
+                    </p>
+                    <p className="text-sm mt-0.5 font-mono">
+                      {result.prediction.inauspiciousTime}
+                    </p>
                   </div>
                 )}
               </div>
@@ -134,7 +170,9 @@ export function DailyPrediction({ form }: { form: BirthFormData }) {
             {result.currentDasa && (
               <p className="text-xs text-muted-foreground">
                 Active Mahadasa:{" "}
-                <span className="text-foreground font-medium">{result.currentDasa.lordName.en}</span>
+                <span className="text-foreground font-medium">
+                  {result.currentDasa.lordName.en}
+                </span>
               </p>
             )}
           </motion.div>
@@ -159,7 +197,11 @@ function DailySection({
       <p
         className={
           "text-xs uppercase tracking-wider font-medium mb-1 " +
-          (tone === "good" ? "text-tulsi" : tone === "warn" ? "text-sindoor" : "text-ash")
+          (tone === "good"
+            ? "text-tulsi"
+            : tone === "warn"
+              ? "text-sindoor"
+              : "text-ash")
         }
       >
         {title}

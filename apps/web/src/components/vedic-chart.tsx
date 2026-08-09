@@ -1,5 +1,10 @@
 import { motion } from "framer-motion";
-import { PLANET_SHORT, PLANET_GLYPHS, ZODIAC_GLYPHS, ZODIAC_EN } from "@/lib/astro";
+import {
+  PLANET_SHORT,
+  PLANET_GLYPHS,
+  ZODIAC_GLYPHS,
+  ZODIAC_EN,
+} from "@/lib/astro";
 import { cn } from "@/lib/utils";
 
 /**
@@ -54,15 +59,24 @@ export function VedicChart({
     if (houseNum === 0) {
       if (gridIndex === 5) {
         return (
-          <div key="center" className="chart-center flex items-center justify-center">
+          <div
+            key="center"
+            className="chart-center flex items-center justify-center"
+          >
             <div className="text-center relative z-10 p-1">
-              <div className="font-display text-xs text-ash uppercase tracking-widest">{chartLabel}</div>
-              <div className="font-data text-[9px] text-ash/50 mt-1">Lahiri Ayanamsa</div>
+              <div className="font-display text-xs text-ash uppercase tracking-widest">
+                {chartLabel}
+              </div>
+              <div className="font-data text-[9px] text-ash/50 mt-1">
+                Lahiri Ayanamsa
+              </div>
             </div>
           </div>
         );
       }
-      return <div key={`skip-${gridIndex}`} className="border-0 bg-transparent" />;
+      return (
+        <div key={`skip-${gridIndex}`} className="border-0 bg-transparent" />
+      );
     }
 
     const sign = houseSign(houseNum);
@@ -95,11 +109,16 @@ export function VedicChart({
         className={cn(
           "relative flex flex-col items-center justify-center p-2 h-full w-full select-none cursor-default",
           clickable && "cursor-pointer hover:bg-turmeric/5 transition-colors",
-          isSelected && "bg-turmeric/10"
+          isSelected && "bg-turmeric/10",
         )}
       >
         {/* House number */}
-        <span className={cn("absolute top-1 left-1 font-data text-[9px] leading-none", isLagna ? "text-turmeric" : "text-ash/70")}>
+        <span
+          className={cn(
+            "absolute top-1 left-1 font-data text-[9px] leading-none",
+            isLagna ? "text-turmeric" : "text-ash/70",
+          )}
+        >
           {houseNum}
         </span>
 
@@ -110,9 +129,17 @@ export function VedicChart({
 
         {/* Planets */}
         {cellPlanets.length > 0 ? (
-          <span className={cn("flex flex-wrap items-center justify-center gap-x-1 gap-y-0 font-data text-[11px] md:text-xs text-center leading-tight", isLagna ? "font-bold text-turmeric" : "text-turmeric")}>
+          <span
+            className={cn(
+              "flex flex-wrap items-center justify-center gap-x-1 gap-y-0 font-data text-[11px] md:text-xs text-center leading-tight",
+              isLagna ? "font-bold text-turmeric" : "text-turmeric",
+            )}
+          >
             {cellPlanets.map((p) => (
-              <span key={p.planetId} className="relative inline-flex items-center gap-0.5">
+              <span
+                key={p.planetId}
+                className="relative inline-flex items-center gap-0.5"
+              >
                 {PLANET_GLYPHS[p.planetId]}
                 {PLANET_SHORT[p.planetId]}
                 {p.marker && (
@@ -131,7 +158,9 @@ export function VedicChart({
         )}
 
         {isLagna && cellPlanets.length === 0 && (
-          <span className="text-turmeric font-data text-[11px] md:text-xs font-bold">As</span>
+          <span className="text-turmeric font-data text-[11px] md:text-xs font-bold">
+            As
+          </span>
         )}
       </div>
     );
@@ -140,12 +169,21 @@ export function VedicChart({
       ? {
           initial: { opacity: 0, scale: 0.9 },
           animate: { opacity: 1, scale: 1 },
-          transition: { delay: 0.5 + houseNum * 0.05, type: "spring" as const, stiffness: 120, damping: 18 },
+          transition: {
+            delay: 0.5 + houseNum * 0.05,
+            type: "spring" as const,
+            stiffness: 120,
+            damping: 18,
+          },
         }
       : {};
 
     return (
-      <motion.div key={`house-${houseNum}`} className="h-full w-full" {...motionProps}>
+      <motion.div
+        key={`house-${houseNum}`}
+        className="h-full w-full"
+        {...motionProps}
+      >
         {inner}
       </motion.div>
     );
@@ -155,12 +193,18 @@ export function VedicChart({
   const srRows = Array.from({ length: 12 }, (_, i) => {
     const h = i + 1;
     const sign = houseSign(h);
-    const names = housePlanets[h]?.map((p) => PLANET_SHORT[p.planetId]).join(", ") || "—";
+    const names =
+      housePlanets[h]?.map((p) => PLANET_SHORT[p.planetId]).join(", ") || "—";
     return { h, sign: ZODIAC_EN[sign], names };
   });
 
   return (
-    <div className={cn("relative aspect-square w-full bg-manuscript/10 p-1", className)}>
+    <div
+      className={cn(
+        "relative aspect-square w-full bg-manuscript/10 p-1",
+        className,
+      )}
+    >
       {/* Grid drawing */}
       <svg
         className="absolute inset-0 w-full h-full text-ash/25 pointer-events-none"
@@ -168,21 +212,105 @@ export function VedicChart({
         fill="none"
         aria-hidden="true"
       >
-        <rect x="0.5" y="0.5" width="99" height="99" stroke="hsl(var(--ash))" strokeWidth="0.5" />
-        <line x1="0" y1="25" x2="100" y2="25" stroke="hsl(var(--ash))" strokeWidth="0.5" />
-        <line x1="0" y1="75" x2="100" y2="75" stroke="hsl(var(--ash))" strokeWidth="0.5" />
-        <line x1="25" y1="0" x2="25" y2="100" stroke="hsl(var(--ash))" strokeWidth="0.5" />
-        <line x1="75" y1="0" x2="75" y2="100" stroke="hsl(var(--ash))" strokeWidth="0.5" />
-        <line x1="0" y1="50" x2="25" y2="50" stroke="hsl(var(--ash))" strokeWidth="0.5" />
-        <line x1="75" y1="50" x2="100" y2="50" stroke="hsl(var(--ash))" strokeWidth="0.5" />
-        <line x1="50" y1="0" x2="50" y2="25" stroke="hsl(var(--ash))" strokeWidth="0.5" />
-        <line x1="50" y1="75" x2="50" y2="100" stroke="hsl(var(--ash))" strokeWidth="0.5" />
-        <line x1="25" y1="25" x2="75" y2="75" stroke="hsl(var(--ash))" strokeWidth="0.5" />
-        <line x1="75" y1="25" x2="25" y2="75" stroke="hsl(var(--ash))" strokeWidth="0.5" />
-        <polygon points="50,25 75,50 50,75 25,50" stroke="hsl(var(--ash))" strokeWidth="0.5" />
+        <rect
+          x="0.5"
+          y="0.5"
+          width="99"
+          height="99"
+          stroke="hsl(var(--ash))"
+          strokeWidth="0.5"
+        />
+        <line
+          x1="0"
+          y1="25"
+          x2="100"
+          y2="25"
+          stroke="hsl(var(--ash))"
+          strokeWidth="0.5"
+        />
+        <line
+          x1="0"
+          y1="75"
+          x2="100"
+          y2="75"
+          stroke="hsl(var(--ash))"
+          strokeWidth="0.5"
+        />
+        <line
+          x1="25"
+          y1="0"
+          x2="25"
+          y2="100"
+          stroke="hsl(var(--ash))"
+          strokeWidth="0.5"
+        />
+        <line
+          x1="75"
+          y1="0"
+          x2="75"
+          y2="100"
+          stroke="hsl(var(--ash))"
+          strokeWidth="0.5"
+        />
+        <line
+          x1="0"
+          y1="50"
+          x2="25"
+          y2="50"
+          stroke="hsl(var(--ash))"
+          strokeWidth="0.5"
+        />
+        <line
+          x1="75"
+          y1="50"
+          x2="100"
+          y2="50"
+          stroke="hsl(var(--ash))"
+          strokeWidth="0.5"
+        />
+        <line
+          x1="50"
+          y1="0"
+          x2="50"
+          y2="25"
+          stroke="hsl(var(--ash))"
+          strokeWidth="0.5"
+        />
+        <line
+          x1="50"
+          y1="75"
+          x2="50"
+          y2="100"
+          stroke="hsl(var(--ash))"
+          strokeWidth="0.5"
+        />
+        <line
+          x1="25"
+          y1="25"
+          x2="75"
+          y2="75"
+          stroke="hsl(var(--ash))"
+          strokeWidth="0.5"
+        />
+        <line
+          x1="75"
+          y1="25"
+          x2="25"
+          y2="75"
+          stroke="hsl(var(--ash))"
+          strokeWidth="0.5"
+        />
+        <polygon
+          points="50,25 75,50 50,75 25,50"
+          stroke="hsl(var(--ash))"
+          strokeWidth="0.5"
+        />
         {/* Lagna marker — thin turmeric border, precision not decoration */}
         <rect
-          x="25.5" y="0.5" width="24" height="24"
+          x="25.5"
+          y="0.5"
+          width="24"
+          height="24"
           stroke="hsl(var(--turmeric))"
           strokeWidth="1.25"
           fill="rgba(227, 162, 61, 0.04)"
@@ -198,12 +326,18 @@ export function VedicChart({
       <table className="sr-only">
         <caption>{chartLabel} — house, sign, planets</caption>
         <thead>
-          <tr><th scope="col">House</th><th scope="col">Sign</th><th scope="col">Planets</th></tr>
+          <tr>
+            <th scope="col">House</th>
+            <th scope="col">Sign</th>
+            <th scope="col">Planets</th>
+          </tr>
         </thead>
         <tbody>
           {srRows.map((r) => (
             <tr key={r.h}>
-              <td>{r.h}</td><td>{r.sign}</td><td>{r.names}</td>
+              <td>{r.h}</td>
+              <td>{r.sign}</td>
+              <td>{r.names}</td>
             </tr>
           ))}
         </tbody>
@@ -213,25 +347,124 @@ export function VedicChart({
 }
 
 /** Static faint outline preview for the empty state. */
-export function ChartPreview({ label = "D1 Rasi", className = "" }: { label?: string; className?: string }) {
+export function ChartPreview({
+  label = "D1 Rasi",
+  className = "",
+}: {
+  label?: string;
+  className?: string;
+}) {
   return (
-    <div className={cn("relative aspect-square w-full bg-manuscript/5 p-1 opacity-30", className)}>
-      <svg className="absolute inset-0 w-full h-full text-ash/25 pointer-events-none" viewBox="0 0 100 100" fill="none" aria-hidden="true">
-        <rect x="0.5" y="0.5" width="99" height="99" stroke="hsl(var(--ash))" strokeWidth="0.5" />
-        <line x1="0" y1="25" x2="100" y2="25" stroke="hsl(var(--ash))" strokeWidth="0.5" />
-        <line x1="0" y1="75" x2="100" y2="75" stroke="hsl(var(--ash))" strokeWidth="0.5" />
-        <line x1="25" y1="0" x2="25" y2="100" stroke="hsl(var(--ash))" strokeWidth="0.5" />
-        <line x1="75" y1="0" x2="75" y2="100" stroke="hsl(var(--ash))" strokeWidth="0.5" />
-        <line x1="0" y1="50" x2="25" y2="50" stroke="hsl(var(--ash))" strokeWidth="0.5" />
-        <line x1="75" y1="50" x2="100" y2="50" stroke="hsl(var(--ash))" strokeWidth="0.5" />
-        <line x1="50" y1="0" x2="50" y2="25" stroke="hsl(var(--ash))" strokeWidth="0.5" />
-        <line x1="50" y1="75" x2="50" y2="100" stroke="hsl(var(--ash))" strokeWidth="0.5" />
-        <line x1="25" y1="25" x2="75" y2="75" stroke="hsl(var(--ash))" strokeWidth="0.5" />
-        <line x1="75" y1="25" x2="25" y2="75" stroke="hsl(var(--ash))" strokeWidth="0.5" />
-        <polygon points="50,25 75,50 50,75 25,50" stroke="hsl(var(--ash))" strokeWidth="0.5" />
+    <div
+      className={cn(
+        "relative aspect-square w-full bg-manuscript/5 p-1 opacity-30",
+        className,
+      )}
+    >
+      <svg
+        className="absolute inset-0 w-full h-full text-ash/25 pointer-events-none"
+        viewBox="0 0 100 100"
+        fill="none"
+        aria-hidden="true"
+      >
+        <rect
+          x="0.5"
+          y="0.5"
+          width="99"
+          height="99"
+          stroke="hsl(var(--ash))"
+          strokeWidth="0.5"
+        />
+        <line
+          x1="0"
+          y1="25"
+          x2="100"
+          y2="25"
+          stroke="hsl(var(--ash))"
+          strokeWidth="0.5"
+        />
+        <line
+          x1="0"
+          y1="75"
+          x2="100"
+          y2="75"
+          stroke="hsl(var(--ash))"
+          strokeWidth="0.5"
+        />
+        <line
+          x1="25"
+          y1="0"
+          x2="25"
+          y2="100"
+          stroke="hsl(var(--ash))"
+          strokeWidth="0.5"
+        />
+        <line
+          x1="75"
+          y1="0"
+          x2="75"
+          y2="100"
+          stroke="hsl(var(--ash))"
+          strokeWidth="0.5"
+        />
+        <line
+          x1="0"
+          y1="50"
+          x2="25"
+          y2="50"
+          stroke="hsl(var(--ash))"
+          strokeWidth="0.5"
+        />
+        <line
+          x1="75"
+          y1="50"
+          x2="100"
+          y2="50"
+          stroke="hsl(var(--ash))"
+          strokeWidth="0.5"
+        />
+        <line
+          x1="50"
+          y1="0"
+          x2="50"
+          y2="25"
+          stroke="hsl(var(--ash))"
+          strokeWidth="0.5"
+        />
+        <line
+          x1="50"
+          y1="75"
+          x2="50"
+          y2="100"
+          stroke="hsl(var(--ash))"
+          strokeWidth="0.5"
+        />
+        <line
+          x1="25"
+          y1="25"
+          x2="75"
+          y2="75"
+          stroke="hsl(var(--ash))"
+          strokeWidth="0.5"
+        />
+        <line
+          x1="75"
+          y1="25"
+          x2="25"
+          y2="75"
+          stroke="hsl(var(--ash))"
+          strokeWidth="0.5"
+        />
+        <polygon
+          points="50,25 75,50 50,75 25,50"
+          stroke="hsl(var(--ash))"
+          strokeWidth="0.5"
+        />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-        <span className="font-display text-xs text-ash uppercase tracking-widest">{label}</span>
+        <span className="font-display text-xs text-ash uppercase tracking-widest">
+          {label}
+        </span>
       </div>
     </div>
   );

@@ -43,12 +43,18 @@ function parseTime(t: string): string {
 
 export function BirthForm({
   onSubmit,
+  onChange,
   pending,
   initial,
+  hideSubmit = false,
+  accentLabel,
 }: {
   onSubmit: (data: BirthFormData) => void;
+  onChange?: (data: BirthFormData) => void;
   pending: boolean;
   initial?: Partial<BirthFormData>;
+  hideSubmit?: boolean;
+  accentLabel?: string;
 }) {
   const [form, setForm] = useState<BirthFormData>({
     name: "",
@@ -81,8 +87,11 @@ export function BirthForm({
     return e;
   }, [form]);
 
-  const set = (patch: Partial<BirthFormData>) =>
-    setForm((f) => ({ ...f, ...patch }));
+  const set = (patch: Partial<BirthFormData>) => {
+    const next = { ...form, ...patch };
+    setForm(next);
+    onChange?.(next);
+  };
 
   const fillNow = () => {
     const now = new Date();
@@ -107,13 +116,19 @@ export function BirthForm({
         // Reverse geocode for a friendly label
         try {
           const res = await fetch(
-            `https://photon.komoot.io/reverse?lon=${longitude}&lat=${latitude}`
+            `https://photon.komoot.io/reverse?lon=${longitude}&lat=${latitude}`,
           );
           if (res.ok) {
             const raw = await res.json();
             const props = raw.features?.[0]?.properties || {};
-            const parts = [props.name, props.city, props.state, props.country].filter(Boolean);
-            if (parts.length) setSelectedLocation([...new Set(parts)].join(", "));
+            const parts = [
+              props.name,
+              props.city,
+              props.state,
+              props.country,
+            ].filter(Boolean);
+            if (parts.length)
+              setSelectedLocation([...new Set(parts)].join(", "));
           }
         } catch {}
         setGeoLoading(false);
@@ -123,10 +138,10 @@ export function BirthForm({
         setGeoError(
           err.code === err.PERMISSION_DENIED
             ? "Location permission denied — enter coordinates manually."
-            : "Could not determine location."
+            : "Could not determine location.",
         );
       },
-      { timeout: 8000 }
+      { timeout: 8000 },
     );
   };
 
@@ -147,14 +162,19 @@ export function BirthForm({
       setSearching(true);
       try {
         const res = await fetch(
-          `https://photon.komoot.io/api/?q=${encodeURIComponent(q.trim())}&limit=5`
+          `https://photon.komoot.io/api/?q=${encodeURIComponent(q.trim())}&limit=5`,
         );
         if (!res.ok) return;
         const raw = await res.json();
         const data: LocationResult[] = (raw.features || []).map((f: any) => {
           const props = f.properties || {};
           const coords = f.geometry?.coordinates || [0, 0];
-          const parts = [props.name, props.city, props.state, props.country].filter(Boolean);
+          const parts = [
+            props.name,
+            props.city,
+            props.state,
+            props.country,
+          ].filter(Boolean);
           return {
             display_name: [...new Set(parts)].join(", "),
             lat: String(coords[1]),
@@ -182,7 +202,12 @@ export function BirthForm({
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    setTouched({ birthDate: true, birthTime: true, latitude: true, longitude: true });
+    setTouched({
+      birthDate: true,
+      birthTime: true,
+      latitude: true,
+      longitude: true,
+    });
     if (Object.keys(errors).length) return;
     onSubmit(form);
   };
@@ -196,7 +221,9 @@ export function BirthForm({
       <div className="space-y-1.5">
         <Label htmlFor="name" className="flex items-center gap-1.5">
           <User className="w-3.5 h-3.5" /> Name{" "}
-          <span className="text-muted-foreground/50 font-normal">(optional)</span>
+          <span className="text-muted-foreground/50 font-normal">
+            (optional)
+          </span>
         </Label>
         <Input
           id="name"
@@ -243,7 +270,9 @@ export function BirthForm({
                   onClick={() => pickLocation(r)}
                   className="w-full text-left px-3 py-2 text-xs hover:bg-secondary/60 transition border-b border-border last:border-0"
                 >
-                  <span className="font-medium">{r.display_name.split(",")[0]}</span>
+                  <span className="font-medium">
+                    {r.display_name.split(",")[0]}
+                  </span>
                   <span className="block text-muted-foreground truncate">
                     {r.display_name}
                   </span>
@@ -258,7 +287,8 @@ export function BirthForm({
             {selectedLocation}
             {form.latitude && form.longitude && (
               <span className="font-mono">
-                · {parseFloat(form.latitude).toFixed(3)}°, {parseFloat(form.longitude).toFixed(3)}°
+                · {parseFloat(form.latitude).toFixed(3)}°,{" "}
+                {parseFloat(form.longitude).toFixed(3)}°
               </span>
             )}
           </span>
@@ -274,7 +304,10 @@ export function BirthForm({
               key={city.name}
               type="button"
               onClick={() => {
-                set({ latitude: String(city.lat), longitude: String(city.lon) });
+                set({
+                  latitude: String(city.lat),
+                  longitude: String(city.lon),
+                });
                 setSelectedLocation(city.name);
                 setLocationQuery(city.name);
               }}
@@ -412,21 +445,22 @@ export function BirthForm({
         </select>
       </div>
 
-      <Button type="submit" disabled={pending} className="w-full" size="lg">
-        {pending ? (
-          <>
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Computing…
-          </>
-        ) : (
-          <>
-            <Sparkles className="w-4 h-4" />
-            Compute chart
-          </>
-        )}
-      </Button>
-
-      {Object.keys(errors).length > 0 && touched.birthDate && (
+      {!hideSubmit && (
+        <Button type="submit" disabled={pending} className="w-full" size="lg">
+          {pending ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Computing…
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-4 h-4" />
+              {accentLabel || "Compute chart"}
+            </>
+          )}
+        </Button>
+      )}
+      {!hideSubmit && Object.keys(errors).length > 0 && touched.birthDate && (
         <p className="text-xs text-muted-foreground text-center">
           Complete the highlighted fields to compute.
         </p>

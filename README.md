@@ -56,14 +56,16 @@ graha/
 - **108 planet-in-house rules** — career, relationships, health for every combination
 - **108 planet-in-sign rules** — complete dignity mapping
 - **144 house lord placements** — every lord-in-house combination
-- **27 nakshatras** — full profiles with deity, symbol, shakti
+- **27 nakshatras** — full profiles with deity, symbol, shakti, and **pada (1–4)**
 - **Yoga detection** — Gaja Kesari, Dhana, Raja, Vesi, Panchamahapurusha
 - **Dosha detection** — Mangalik, Kaal Sarpa, Pitri
 - **Navamsa D9 chart** — Vargottama, marriage analysis
 - **Vedic aspects** — Mars (4,7,8), Saturn (3,7,10), Jupiter (5,7,9)
-- **Current Dasa** — Vimshottari Dasa calculation
+- **Current Dasa** — Vimshottari Dasa with Antardasa sub-periods
 - **Combustion detection** — planets weakened by Sun proximity
 - **Remedies** — gemstones, mantras, actions per planet
+- **Guna Milan matchmaking** — full 36-point Ashtakoota (Varna, Vashya, Tara, Yoni, Graha Maitri, Gana, Bhakoot, Nadi) with classical exceptions, plus Mangal/Kuja dosha with cancellation rules, nakshatra Vedha, Rajju dosha, **and Lagna compatibility (Sri Lankan practice)**. Bilingual (English/Sinhala) labels, computed from Swiss Ephemeris positions. Validated by `pnpm validate:matchmaking` (42 rule assertions)
+- **Panchanga (Sinhala almanac)** — daily sunrise/sunset, **Rahu Kala / Yama Kala / Gulika Kala** (the traditional inauspicious periods Sri Lankans avoid), Buddhist Era date, Sinhala month & weekday, day nakshatra (නැකත), and auspicious time windows. Computed from real ephemeris sunrise/sunset
 - **Historical timezone accuracy** — IANA database via luxon
 - **API security** — server-side proxy, secret never exposed to the browser
 - **Edge runtime** — instant cold starts, globally distributed
@@ -124,6 +126,8 @@ The Next.js dev server proxies `/api/*` requests to the Hono backend (configured
 | `POST` | `/api/chart/compute` | Compute birth chart from birth data |
 | `POST` | `/api/prediction/interpret` | Full chart reading (rule engine + optional AI) |
 | `POST` | `/api/prediction/daily` | Daily prediction |
+| `POST` | `/api/match/compute` | **Guna Milan matchmaking** — 36-point Ashtakoota + doshas + Lagna compatibility |
+| `GET` | `/api/panchanga` | **Sinhala almanac** — Rahu/Yama/Gulika Kala, B.E. date, day nakshatra |
 | `POST` | `/api/profile/create` | Create user profile |
 | `GET` | `/api/profile/:id` | Get user profile |
 
@@ -139,6 +143,27 @@ curl -X POST http://localhost:3001/api/prediction/interpret \
     "longitude": 79.8612,
     "aiMode": "off"
   }'
+```
+
+### Example: Guna Milan matchmaking (rule engine)
+
+```bash
+curl -X POST http://localhost:3001/api/match/compute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "boy":  { "birthDate": "1990-04-15", "birthTime": "10:30", "latitude": 6.9271, "longitude": 79.8612 },
+    "girl": { "birthDate": "1992-11-03", "birthTime": "18:45", "latitude": 6.9271, "longitude": 79.8612 }
+  }'
+```
+
+Returns the full 8-koota breakdown, total/36, verdict, and dosha analysis (Mangal, Nadi, Bhakoot, Vedha, Rajju) with classical exceptions applied.
+
+### Validate the matchmaking engine
+
+The engine ships with a rule-by-rule test suite covering every koota and dosha:
+
+```bash
+cd apps/api && pnpm validate:matchmaking
 ```
 
 The `aiMode` parameter controls AI usage:

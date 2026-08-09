@@ -6,6 +6,9 @@
  */
 import { DateTime } from "luxon";
 import swisseph from "swisseph";
+import { createRequire } from "module";
+import { existsSync } from "fs";
+import { resolve } from "path";
 import type {
   BirthChart,
   PlanetaryPosition,
@@ -15,10 +18,7 @@ import type {
   DasaPeriod,
   SubDasa,
 } from "../types/chart.js";
-import {
-  ZODIAC_NAMES,
-  PLANET_NAMES,
-} from "../types/chart.js";
+import { ZODIAC_NAMES, PLANET_NAMES } from "../types/chart.js";
 import { getNavamsaSign } from "./interpretations/navamsa.js";
 
 // Swiss Ephemeris flag constants
@@ -32,7 +32,19 @@ const HOUSE_SYSTEM = "P".charCodeAt(0); // Placidus
 
 // ─── Initialize ──────────────────────────────────────────────
 export function initEphemeris(path?: string): void {
-  if (path) {
+  // If no explicit path, use the ephemeris files bundled with the swisseph
+  // package (falls back to the Moshier ephemeris if files are unavailable).
+  if (!path) {
+    try {
+      const require = createRequire(import.meta.url);
+      const bundled = resolve(require.resolve("swisseph"), "../../ephe");
+      if (existsSync(bundled)) {
+        swisseph.swe_set_ephe_path(bundled);
+      }
+    } catch {
+      // no bundled files — swe_calc falls back to Moshier
+    }
+  } else {
     swisseph.swe_set_ephe_path(path);
   }
   // Set Lahiri Ayanamsa for Vedic sidereal calculations
@@ -44,7 +56,7 @@ export function initEphemeris(path?: string): void {
 export function localToJulianDay(
   birthDate: string,
   birthTime: string,
-  timezone: string
+  timezone: string,
 ): number {
   // Use luxon to get the exact UTC time, accounting for historical timezone changes
   const dt = DateTime.fromISO(`${birthDate}T${birthTime}:00`, {
@@ -52,12 +64,20 @@ export function localToJulianDay(
   });
 
   if (!dt.isValid) {
-    console.warn(`[Ephemeris] Invalid date/time: ${birthDate}T${birthTime} in ${timezone}`);
+    console.warn(
+      `[Ephemeris] Invalid date/time: ${birthDate}T${birthTime} in ${timezone}`,
+    );
     // Fallback: use hardcoded offset
     const [year, month, day] = birthDate.split("-").map(Number);
     const [hours, minutes] = birthTime.split(":").map(Number);
     const fallbackOffset = 5.5; // Sri Lanka standard
-    return swisseph.swe_julday(year, month, day, hours - fallbackOffset + minutes / 60, swisseph.SE_GREG_CAL);
+    return swisseph.swe_julday(
+      year,
+      month,
+      day,
+      hours - fallbackOffset + minutes / 60,
+      swisseph.SE_GREG_CAL,
+    );
   }
 
   const utc = dt.toUTC();
@@ -66,14 +86,14 @@ export function localToJulianDay(
     utc.month,
     utc.day,
     utc.hour + utc.minute / 60 + utc.second / 3600,
-    swisseph.SE_GREG_CAL
+    swisseph.SE_GREG_CAL,
   );
 }
 
 // ─── Planetary Position ────────────────────────────────────
 export function getPlanetPosition(
   jd: number,
-  planetId: number
+  planetId: number,
 ): {
   longitude: number;
   latitude: number;
@@ -83,7 +103,9 @@ export function getPlanetPosition(
 } | null {
   const result = swisseph.swe_calc_ut(jd, planetId, DEFAULT_FLAGS);
   if ("error" in result) {
-    console.warn(`[Ephemeris] swe_calc_ut error for planet ${planetId}: ${(result as any).error}`);
+    console.warn(
+      `[Ephemeris] swe_calc_ut error for planet ${planetId}: ${(result as any).error}`,
+    );
     return null;
   }
   if (!("longitude" in result)) {
@@ -99,9 +121,12 @@ export function getPlanetPosition(
 }
 
 // ─── All Planets ─────────────────────────────────────────────
-export function getAllPlanetPositions(
-  jd: number
-): Array<{ planetId: number; longitude: number; latitude: number; speed: number }> {
+export function getAllPlanetPositions(jd: number): Array<{
+  planetId: number;
+  longitude: number;
+  latitude: number;
+  speed: number;
+}> {
   const positions: Array<{
     planetId: number;
     longitude: number;
@@ -118,7 +143,11 @@ export function getAllPlanetPositions(
 
   // Add Rahu (North Lunar Node) and Ketu (180° opposite)
   try {
-    const rahuResult = swisseph.swe_calc_ut(jd, swisseph.SE_MEAN_NODE, DEFAULT_FLAGS);
+    const rahuResult = swisseph.swe_calc_ut(
+      jd,
+      swisseph.SE_MEAN_NODE,
+      DEFAULT_FLAGS,
+    );
     if (!("error" in rahuResult) && "longitude" in rahuResult) {
       positions.push({
         planetId: 10, // Rahu
@@ -144,13 +173,19 @@ export function getAllPlanetPositions(
 export function getHouses(
   jd: number,
   lat: number,
-  lon: number
+  lon: number,
 ): {
   ascendant: number;
   mc: number;
   cusps: number[];
 } | null {
-  const result = swisseph.swe_houses_ex(jd, DEFAULT_FLAGS, lat, lon, String.fromCharCode(HOUSE_SYSTEM));
+  const result = swisseph.swe_houses_ex(
+    jd,
+    DEFAULT_FLAGS,
+    lat,
+    lon,
+    String.fromCharCode(HOUSE_SYSTEM),
+  );
   if ("error" in result) {
     console.warn(`[Ephemeris] swe_houses error: ${(result as any).error}`);
     return null;
@@ -164,15 +199,19 @@ export function getHouses(
 
 // ─── Zodiac Sign Helpers ─────────────────────────────────────
 export function getZodiacSign(longitude: number): ZodiacSign {
-  return (Math.floor(((longitude % 360 + 360) % 360) / 30) % 12) as ZodiacSign;
+  return (Math.floor((((longitude % 360) + 360) % 360) / 30) %
+    12) as ZodiacSign;
 }
 
 export function getSignDegree(longitude: number): number {
-  return ((longitude % 360 + 360) % 360) % 30;
+  return (((longitude % 360) + 360) % 360) % 30;
 }
 
-export function getHouseForLongitude(longitude: number, cusps: number[]): number {
-  const normLon = (longitude % 360 + 360) % 360;
+export function getHouseForLongitude(
+  longitude: number,
+  cusps: number[],
+): number {
+  const normLon = ((longitude % 360) + 360) % 360;
   for (let i = 0; i < 12; i++) {
     const start = cusps[i];
     const end = cusps[(i + 1) % 12];
@@ -217,7 +256,10 @@ const NAKSHATRAS = [
   { name: "Revati", lord: "Mercury", range: [346.67, 360] },
 ];
 
-export function getNakshatra(longitude: number): { name: string; lord: string } {
+export function getNakshatra(longitude: number): {
+  name: string;
+  lord: string;
+} {
   const normLon = ((longitude % 360) + 360) % 360;
   for (const nak of NAKSHATRAS) {
     const [start, end] = nak.range;
@@ -230,27 +272,51 @@ export function getNakshatra(longitude: number): { name: string; lord: string } 
 
 // ─── Planetary Dignity (simplified Vedic) ────────────────────
 const EXALT_SIGN: Record<number, number> = {
-  0: 0, 1: 1, 2: 5, 3: 11, 4: 9, 5: 3, 6: 6,
+  0: 0,
+  1: 1,
+  2: 5,
+  3: 11,
+  4: 9,
+  5: 3,
+  6: 6,
 };
 const DEBIL_SIGN: Record<number, number> = {
-  0: 6, 1: 7, 2: 11, 3: 5, 4: 3, 5: 9, 6: 0,
+  0: 6,
+  1: 7,
+  2: 11,
+  3: 5,
+  4: 3,
+  5: 9,
+  6: 0,
 };
 const EXALTATION_DEG: Record<number, number> = {
-  0: 10, 1: 3, 2: 15, 3: 27, 4: 28, 5: 5, 6: 20,
+  0: 10,
+  1: 3,
+  2: 15,
+  3: 27,
+  4: 28,
+  5: 5,
+  6: 20,
 };
 
 export function getDignity(
   planetId: number,
-  longitude: number
+  longitude: number,
 ): "exalted" | "debilitated" | "neutral" {
   if (!(planetId in EXALTATION_DEG)) return "neutral";
   const sign = getZodiacSign(longitude);
   const degree = getSignDegree(longitude);
 
-  if (sign === EXALT_SIGN[planetId] && Math.abs(degree - EXALTATION_DEG[planetId]) < 6) {
+  if (
+    sign === EXALT_SIGN[planetId] &&
+    Math.abs(degree - EXALTATION_DEG[planetId]) < 6
+  ) {
     return "exalted";
   }
-  if (sign === DEBIL_SIGN[planetId] && Math.abs(degree - EXALTATION_DEG[planetId]) < 6) {
+  if (
+    sign === DEBIL_SIGN[planetId] &&
+    Math.abs(degree - EXALTATION_DEG[planetId]) < 6
+  ) {
     return "debilitated";
   }
   return "neutral";
@@ -260,7 +326,10 @@ export function getDignity(
 const DASA_LORDS = [0, 1, 2, 3, 4, 5, 6, 10, 11] as const;
 const DASA_YEARS = [6, 10, 7, 18, 16, 19, 17, 18, 7];
 
-export function calculateCurrentDasa(birthJd: number, currentJd: number): DasaPeriod | null {
+export function calculateCurrentDasa(
+  birthJd: number,
+  currentJd: number,
+): DasaPeriod | null {
   const moonPos = getPlanetPosition(birthJd, 1);
   if (!moonPos) return null;
 
@@ -314,7 +383,9 @@ function getNakshatraRemaining(longitude: number): number {
 
 function generateSubDasas(mainLord: number, totalYears: number): SubDasa[] {
   const subDasas: SubDasa[] = [];
-  const startIndex = DASA_LORDS.indexOf(mainLord as unknown as (typeof DASA_LORDS)[number]);
+  const startIndex = DASA_LORDS.indexOf(
+    mainLord as unknown as (typeof DASA_LORDS)[number],
+  );
   if (startIndex === -1) return subDasas;
 
   let accumulatedMonths = 0;
@@ -363,7 +434,10 @@ export function computeBirthChart(params: {
 
     return {
       planet: pos.planetId as unknown as Planet,
-      name: PLANET_NAMES[pos.planetId] || { en: `Planet ${pos.planetId}`, si: `ග්‍රහ ${pos.planetId}` },
+      name: PLANET_NAMES[pos.planetId] || {
+        en: `Planet ${pos.planetId}`,
+        si: `ග්‍රහ ${pos.planetId}`,
+      },
       longitude: pos.longitude,
       latitude: pos.latitude,
       speed: pos.speed,
@@ -372,6 +446,7 @@ export function computeBirthChart(params: {
       house,
       nakshatra: nakshatra.name,
       nakshatraLord: nakshatra.lord,
+      nakshatraPada: Math.floor((pos.longitude % 13.333333) / 3.333333) + 1,
       isRetrograde: pos.speed < 0,
       dignity: getDignity(pos.planetId, pos.longitude),
     };
@@ -395,7 +470,7 @@ export function computeBirthChart(params: {
   const nowJd = localToJulianDay(
     `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`,
     `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`,
-    "UTC"
+    "UTC",
   );
   const currentDasa = calculateCurrentDasa(jd, nowJd);
 
@@ -409,7 +484,9 @@ export function computeBirthChart(params: {
   }
 
   // Compute Navamsa (D9) chart
-  const navamsaSigns = planets.map(p => getNavamsaSign(p.longitude) as ZodiacSign);
+  const navamsaSigns = planets.map(
+    (p) => getNavamsaSign(p.longitude) as ZodiacSign,
+  );
 
   return {
     name,
@@ -434,12 +511,18 @@ export function computeBirthChart(params: {
 // ─── Helpers ─────────────────────────────────────────────────
 function getSignLord(sign: ZodiacSign): Planet {
   const lords: Record<number, Planet> = {
-    0: 4 as unknown as Planet, 1: 3 as unknown as Planet,
-    2: 2 as unknown as Planet, 3: 1 as unknown as Planet,
-    4: 0 as unknown as Planet, 5: 2 as unknown as Planet,
-    6: 3 as unknown as Planet, 7: 4 as unknown as Planet,
-    8: 5 as unknown as Planet, 9: 6 as unknown as Planet,
-    10: 6 as unknown as Planet, 11: 5 as unknown as Planet,
+    0: 4 as unknown as Planet,
+    1: 3 as unknown as Planet,
+    2: 2 as unknown as Planet,
+    3: 1 as unknown as Planet,
+    4: 0 as unknown as Planet,
+    5: 2 as unknown as Planet,
+    6: 3 as unknown as Planet,
+    7: 4 as unknown as Planet,
+    8: 5 as unknown as Planet,
+    9: 6 as unknown as Planet,
+    10: 6 as unknown as Planet,
+    11: 5 as unknown as Planet,
   };
   return lords[sign];
 }
