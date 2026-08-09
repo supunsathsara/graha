@@ -4,18 +4,32 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMutation } from "@tanstack/react-query";
-import { AlertCircle, ArrowRight, Check, Heart, Loader2, Share2 } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowRight,
+  Check,
+  Heart,
+  Loader2,
+  Share2,
+} from "lucide-react";
 import { ZODIAC_NAMES } from "@graha/shared";
 import { VedicChart, ChartPreview } from "@/components/vedic-chart";
 import { BirthForm, type BirthFormData } from "@/components/birth-form";
 import { ChartResults, type TabId } from "@/components/chart-results";
-import { HistoryPanel, useChartHistory } from "@/components/history-panel";
+import { VaultPanel } from "@/components/vault-panel";
+import { KeyModal } from "@/components/key-modal";
+import {
+  saveChart,
+  getChart,
+  keyAcknowledged,
+  markKeyAcknowledged,
+} from "@/lib/vault";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-type ChartKind = "d1" | "d9";
+type ChartKind = "d1" | "d9" | "d10";
 
 const EMPTY_FORM: BirthFormData = {
   name: "",
@@ -68,7 +82,13 @@ export default function Home() {
   const [chartKind, setChartKind] = useState<ChartKind>("d1");
   const [shared, setShared] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
-  const { entries, save, remove, clear } = useChartHistory();
+  const [loadedResult, setLoadedResult] = useState<{
+    chart: any;
+    reading: any;
+    birthData: any;
+  } | null>(null);
+  const [savePending, setSavePending] = useState(false);
+  const [showKeyModal, setShowKeyModal] = useState(false);
 
   // Prefill from shareable URL hash
   useEffect(() => {
@@ -104,7 +124,7 @@ export default function Home() {
       return res.json();
     },
     onSuccess: (data, variables) => {
-      save(variables);
+      setLoadedResult(null); // a fresh computation replaces any vault load
       setActiveTab("overview");
       setChartKind("d1");
     },
@@ -130,13 +150,37 @@ export default function Home() {
     }
   };
 
-  const selectHistory = (e: BirthFormData) => {
-    setForm(e);
-    mutation.mutate(e);
+  // ─── Family vault handlers ──────────────────────────────
+  const handleVaultSave = async () => {
+    if (!mutation.data?.chart || !mutation.data?.reading) return;
+    setSavePending(true);
+    try {
+      const label =
+        form.name?.trim() || `${form.birthDate} · ${form.birthTime}`;
+      await saveChart(label, form, mutation.data.chart, mutation.data.reading);
+      // First save → make sure the user backs up the recovery key.
+      if (!keyAcknowledged()) setShowKeyModal(true);
+    } catch {}
+    setSavePending(false);
   };
 
-  const chart = mutation.data?.chart;
-  const reading = mutation.data?.reading;
+  const handleVaultLoad = async (id: string) => {
+    try {
+      const saved = await getChart(id);
+      setForm((f) => ({ ...f, ...saved.birthData }));
+      setLoadedResult({
+        chart: saved.chart,
+        reading: saved.reading,
+        birthData: saved.birthData,
+      });
+      setActiveTab("overview");
+      setChartKind("d1");
+    } catch {}
+  };
+
+  // Displayed results: a vault load wins, otherwise the latest computation.
+  const chart = loadedResult?.chart || mutation.data?.chart;
+  const reading = loadedResult?.reading || mutation.data?.reading;
   const lagnaSign = chart?.lagna?.sign ?? 0;
 
   // D9 planets from reading (with planetId/signId now exposed by the API)
@@ -157,6 +201,18 @@ export default function Home() {
       }));
   }, [reading]);
 
+  // D10 (Dashamsha) planets — same South-Indian grid, keyed by D10 lagna
+  const d10Planets = useMemo(() => {
+    const d = reading?.dashamsha;
+    if (!d?.planetPlacements) return [];
+    return d.planetPlacements
+      .filter((p: any) => typeof p.signId === "number")
+      .map((p: any) => ({
+        planetId: p.planetId,
+        house: ((p.signId - d.lagna + 12) % 12) + 1,
+      }));
+  }, [reading]);
+
   const d1Planets = useMemo(
     () =>
       (chart?.planets || []).map((p: any) => ({
@@ -166,23 +222,42 @@ export default function Home() {
     [chart],
   );
 
+  const activePlanets =
+    chartKind === "d1"
+      ? d1Planets
+      : chartKind === "d9"
+        ? d9Planets
+        : d10Planets;
+  const activeLagna =
+    chartKind === "d1"
+      ? lagnaSign
+      : chartKind === "d9"
+        ? reading?.navamsa?.lagna
+        : reading?.dashamsha?.lagna;
+  const activeLabel =
+    chartKind === "d1"
+      ? "D1 Rasi"
+      : chartKind === "d9"
+        ? "D9 Navamsa"
+        : "D10 Dashamsha";
+
   return (
     <div className="flex flex-col min-h-screen bg-night text-ola-leaf overflow-x-hidden">
       {/* Header */}
       <SiteHeader
         right={
           <div className="flex items-center gap-2">
-            <HistoryPanel
-              entries={entries}
-              onSelect={selectHistory}
-              onRemove={remove}
-              onClear={clear}
+            <VaultPanel
+              canSave={!!mutation.data?.chart}
+              onSave={handleVaultSave}
+              onLoad={handleVaultLoad}
+              savePending={savePending}
             />
             <Button
               size="sm"
               variant="outline"
               onClick={handleShare}
-              disabled={!mutation.isSuccess}
+              disabled={!chart}
               title="Copy a link to this chart"
             >
               {shared ? (
@@ -238,6 +313,7 @@ export default function Home() {
                     [
                       { id: "d1", label: "D1 Rasi" },
                       { id: "d9", label: "D9 Navamsa" },
+                      { id: "d10", label: "D10 Dashamsha" },
                     ] as const
                   ).map((k) => (
                     <button
@@ -260,21 +336,15 @@ export default function Home() {
                 <span className="font-mono text-[10px] text-ash">SIDEREAL</span>
               </div>
 
-              {mutation.data && chart ? (
+              {chart ? (
                 <VedicChart
-                  lagnaSign={
-                    chartKind === "d1"
-                      ? lagnaSign
-                      : (reading?.navamsa?.lagna ?? lagnaSign)
-                  }
-                  planets={chartKind === "d1" ? d1Planets : d9Planets}
-                  chartLabel={chartKind === "d1" ? "D1 Rasi" : "D9 Navamsa"}
+                  lagnaSign={activeLagna ?? lagnaSign}
+                  planets={activePlanets}
+                  chartLabel={activeLabel}
                   animate={!reducedMotion}
                 />
               ) : (
-                <ChartPreview
-                  label={chartKind === "d1" ? "D1 Rasi" : "D9 Navamsa"}
-                />
+                <ChartPreview label={activeLabel} />
               )}
 
               {/* Mini readout */}
@@ -282,13 +352,7 @@ export default function Home() {
                 <span>
                   Lagna:{" "}
                   <span className="text-turmeric">
-                    {chart
-                      ? ZODIAC_NAMES[
-                          chartKind === "d1"
-                            ? lagnaSign
-                            : reading?.navamsa?.lagna
-                        ]?.en
-                      : "—"}
+                    {chart ? ZODIAC_NAMES[activeLagna ?? lagnaSign]?.en : "—"}
                   </span>
                 </span>
                 <span>
@@ -306,7 +370,7 @@ export default function Home() {
                 <h3 className="font-display text-xl text-ola-leaf">
                   Instrument Reading
                 </h3>
-                {!mutation.data ? (
+                {!chart ? (
                   <p className="font-sans text-sm text-ash leading-relaxed">
                     Enter a birth date, time, and place to generate a Rasi
                     chart, dasa timeline, house analysis, and remedies.
@@ -369,7 +433,7 @@ export default function Home() {
 
             {/* Results */}
             <AnimatePresence>
-              {mutation.isSuccess && reading && chart && (
+              {(mutation.isSuccess || loadedResult) && reading && chart && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -396,8 +460,8 @@ export default function Home() {
                         Check compatibility with a partner
                       </p>
                       <p className="text-xs mt-0.5">
-                        Guna Milan — 36-point Ashtakoota, Kuja dosha and Lagna compatibility,
-                        following classical Sinhala practice.
+                        Guna Milan — 36-point Ashtakoota, Kuja dosha and Lagna
+                        compatibility, following classical Sinhala practice.
                       </p>
                     </div>
                     <Link
@@ -416,6 +480,9 @@ export default function Home() {
       </main>
 
       <SiteFooter />
+
+      {/* First-save recovery key modal */}
+      <KeyModal open={showKeyModal} onClose={() => setShowKeyModal(false)} />
     </div>
   );
 }

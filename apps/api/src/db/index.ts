@@ -2,45 +2,51 @@
  * Database client — optional Neon PostgreSQL.
  *
  * When DATABASE_URL is set, connects to Neon PostgreSQL.
- * When unset, returns a no-op stub — all chart/reading features work without a database.
+ * When unset, `ensureDb()` resolves null and all persistence features
+ * gracefully no-op (charts/readings still work — they are computed on the fly).
  */
-let dbClient: any = null;
+import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
+import { drizzle, type NeonHttpDatabase } from "drizzle-orm/neon-http";
+import { sql } from "drizzle-orm";
+import * as schema from "./schema.js";
 
-export function getDb() {
-  if (dbClient) return dbClient;
+export type Db = NeonHttpDatabase<typeof schema>;
+
+let dbClient: Db | null = null;
+let connecting: Promise<Db | null> | null = null;
+
+/**
+ * Async DB access. Resolves the connected client (or null if DATABASE_URL
+ * is not configured). Safe to call from every handler — connection is lazy
+ * and reused.
+ */
+export function ensureDb(): Promise<Db | null> {
+  if (dbClient) return Promise.resolve(dbClient);
+  if (connecting) return connecting;
 
   const url = process.env.DATABASE_URL;
   if (!url) {
-    console.warn(
-      "[DB] DATABASE_URL not set — running without database persistence.",
-    );
-    dbClient = { __stub: true };
-    return dbClient;
+    console.warn("[DB] DATABASE_URL not set — running without persistence.");
+    return Promise.resolve(null);
   }
 
-  // Lazy dynamic import — only loads Neon when DATABASE_URL is set
-  import("@neondatabase/serverless")
-    .then(({ neon }) => {
-      import("drizzle-orm/neon-http").then(({ drizzle }) => {
-        import("./schema.js").then((schema) => {
-          const sql = neon(url);
-          dbClient = drizzle(sql, { schema });
-          console.log("[DB] Connected to Neon PostgreSQL");
-        });
-      });
-    })
-    .catch((err) => {
-      console.warn("[DB] Failed to connect to Neon:", err.message);
-      dbClient = { __stub: true };
-    });
+  connecting = (async () => {
+    try {
+      const sqlNeon: NeonQueryFunction<false, false> = neon(url);
+      const client = drizzle(sqlNeon, { schema });
+      // Verify connectivity once
+      await client.execute(sql`select 1`);
+      console.log("[DB] Connected to Neon PostgreSQL");
+      dbClient = client;
+      return client;
+    } catch (err) {
+      console.warn("[DB] Failed to connect to Neon:", (err as Error).message);
+      return null;
+    }
+  })();
 
-  // Return stub immediately; dbClient gets replaced when Neon connects
-  dbClient = { __stub: true };
-  return dbClient;
+  return connecting;
 }
-
-// Eager init on module load
-export const db = getDb();
 
 // ─── Helper: generate UUIDs ────────────────────────────────
 export function generateId(): string {

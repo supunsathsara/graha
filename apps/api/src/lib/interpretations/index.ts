@@ -18,7 +18,10 @@ import { getNakshatraByLongitude } from "./nakshatras.js";
 import {
   getNavamsaPlanetInterpretation,
   computeNavamsaChart,
+  getDashamshaSign,
+  getDashamshaPlanetInterpretation,
 } from "./navamsa.js";
+import { computeShadbala } from "../shadbala.js";
 import { getRemedy, getGeneralRemedy } from "./remedies.js";
 import {
   getYogaInterpretation,
@@ -84,6 +87,19 @@ export interface CompiledReading {
       interpretation: string;
     }[];
   } | null;
+  /** Dashamsha (D10) — career chart */
+  dashamsha: {
+    lagna: number;
+    planetPlacements: {
+      planet: string;
+      planetId: number;
+      sign: string;
+      signId: number;
+      interpretation: string;
+    }[];
+  } | null;
+  /** Shadbala core — per-planet strength components */
+  shadbala: ReturnType<typeof computeShadbala>;
   /** Vedic aspects — which planets aspect which houses */
   aspects: {
     summary: string[];
@@ -292,6 +308,32 @@ export function compileReading(chart: BirthChart): CompiledReading {
       })()
     : null;
 
+  // ─── Dashamsha (D10) career chart ───────────────────────
+  const dashamsha = (() => {
+    if (!chart.planets.length) return null;
+    const placements = chart.planets
+      .filter((p) => (p.planet as unknown as number) <= 9)
+      .map((p) => {
+        const pid = p.planet as unknown as number;
+        const d10 = getDashamshaSign(p.longitude);
+        return {
+          planet: p.name.en,
+          planetId: pid,
+          sign: ZODIAC_NAMES[d10]?.en || "Unknown",
+          signId: d10,
+          interpretation: getDashamshaPlanetInterpretation(pid, d10),
+        };
+      });
+    const d10Lagna = getDashamshaSign(chart.lagna.longitude);
+    return {
+      lagna: d10Lagna,
+      planetPlacements: placements,
+    };
+  })();
+
+  // ─── Shadbala core ──────────────────────────────────────
+  const shadbala = computeShadbala(chart);
+
   // ─── Aspects ─────────────────────────────────────────
   const allAspects =
     chart.planets.length > 0 ? computeAspects(chart.planets) : [];
@@ -377,6 +419,8 @@ export function compileReading(chart: BirthChart): CompiledReading {
     favorablePlanets,
     challengingPlanets,
     navamsa: navamsaAnalysis,
+    dashamsha,
+    shadbala,
     aspects,
     planetaryDignities,
     panchamahapurushaYogas,

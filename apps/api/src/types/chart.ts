@@ -121,17 +121,24 @@ export interface BirthChart {
   rasiChart: ZodiacSign[]; // Rasi (moon sign) — 12 signs for 12 houses
   navamsaChart: ZodiacSign[]; // Navamsa D9 chart
   currentDasa: DasaPeriod | null;
+  /** Full 120-year Vimshottari Mahadasa timeline with real dates. */
+  dasaTimeline: DasaTimelineEntry[];
 }
 
 // ─── Dasa (Planetary Periods) ────────────────────────────────
 export interface DasaPeriod {
   lord: Planet;
   lordName: { en: string; si: string };
+  /** ISO date (YYYY-MM-DD, birth timezone) — the Mahadasa's real start */
   startDate: string;
+  /** ISO date */
   endDate: string;
   totalYears: number;
   subPeriods: SubDasa[];
 }
+
+/** One Mahadasa of the full 120-year Vimshottari cycle. */
+export interface DasaTimelineEntry extends DasaPeriod {}
 
 export interface SubDasa {
   lord: Planet;

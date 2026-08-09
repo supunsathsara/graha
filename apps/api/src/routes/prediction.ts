@@ -142,6 +142,8 @@ predictionRouter.post(
           challenges: reading.challenges,
           remedies: reading.remedies,
           navamsa: reading.navamsa,
+          dashamsha: reading.dashamsha,
+          shadbala: reading.shadbala,
           aspects: reading.aspects,
           planetaryDignities: reading.planetaryDignities,
           panchamahapurushaYogas: reading.panchamahapurushaYogas,

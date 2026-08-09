@@ -175,7 +175,10 @@ function OverviewTab({ reading, chart }: { reading: any; chart: any }) {
           <h4 className="text-sm font-semibold text-primary mb-4">
             Vimshottari Dasa
           </h4>
-          <DasaTimeline dasa={chart?.currentDasa || reading?.currentDasa} />
+          <DasaTimeline
+            timeline={chart?.dasaTimeline}
+            current={chart?.currentDasa}
+          />
         </div>
       )}
 
@@ -233,9 +236,104 @@ function OverviewTab({ reading, chart }: { reading: any; chart: any }) {
 function PlanetsTab({ reading, chart }: { reading: any; chart: any }) {
   const dignities = reading?.planetaryDignities || [];
   const aspectDetails = reading?.aspects?.details || [];
+  const shadbala = reading?.shadbala || [];
 
   return (
     <div className="space-y-6">
+      {shadbala.length > 0 && (
+        <div>
+          <h4 className="text-sm font-semibold text-primary mb-3">
+            Shadbala — planetary strength{" "}
+            <span className="text-muted-foreground font-normal">
+              (core components)
+            </span>
+          </h4>
+          <div className="overflow-x-auto rounded-lg border border-border">
+            <table className="w-full text-sm min-w-[560px]">
+              <thead>
+                <tr className="bg-secondary/50 text-left text-xs uppercase tracking-wider text-muted-foreground">
+                  <th className="px-3 py-2 font-medium">Planet</th>
+                  <th className="px-3 py-2 font-medium">Strength</th>
+                  <th className="px-3 py-2 font-medium">Uchcha</th>
+                  <th className="px-3 py-2 font-medium">Dig</th>
+                  <th className="px-3 py-2 font-medium">Paksha</th>
+                  <th className="px-3 py-2 font-medium">Cheshta</th>
+                  <th className="px-3 py-2 font-medium">Drik</th>
+                  <th className="px-3 py-2 font-medium">Naisargika</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {shadbala.map((s: any) => {
+                  const max = Math.max(
+                    ...shadbala.map((x: any) => x.totalShastyamsha),
+                    1,
+                  );
+                  return (
+                    <tr key={s.planetId}>
+                      <td className="px-3 py-2 font-medium whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1.5">
+                          <span className="text-lg leading-none">
+                            {PLANET_GLYPHS[s.planetId] || ""}
+                          </span>
+                          {s.planet}
+                          {s.strongest && (
+                            <span className="text-[9px] text-tulsi uppercase tracking-wide">
+                              ★ strongest
+                            </span>
+                          )}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 min-w-[140px]">
+                        <div className="flex items-center gap-2">
+                          <div className="h-1.5 flex-1 rounded-full bg-secondary overflow-hidden">
+                            <div
+                              className={cn(
+                                "h-full",
+                                s.strongest ? "bg-tulsi" : "bg-primary/70",
+                              )}
+                              style={{
+                                width: `${(s.totalShastyamsha / max) * 100}%`,
+                              }}
+                            />
+                          </div>
+                          <span className="font-mono text-[11px] text-muted-foreground">
+                            {s.totalRupas.toFixed(2)} r
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-3 py-2 font-mono text-xs">
+                        {s.components.uchcha.toFixed(0)}
+                      </td>
+                      <td className="px-3 py-2 font-mono text-xs">
+                        {s.components.dig.toFixed(0)}
+                      </td>
+                      <td className="px-3 py-2 font-mono text-xs">
+                        {s.components.paksha.toFixed(0)}
+                      </td>
+                      <td className="px-3 py-2 font-mono text-xs">
+                        {s.components.cheshta.toFixed(0)}
+                      </td>
+                      <td className="px-3 py-2 font-mono text-xs">
+                        {s.components.drik.toFixed(0)}
+                      </td>
+                      <td className="px-3 py-2 font-mono text-xs">
+                        {s.components.naisargika.toFixed(0)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-[11px] text-ash mt-2 leading-relaxed">
+            Shadbala core components (shastyamsha units): Uchcha (exaltation),
+            Dig (direction), Paksha (lunar phase), Cheshta (motion), Drik
+            (aspects), Naisargika (natural). Extended components (Saptavargaja,
+            Kendradi, Nathonnata) are not yet included — totals are relative,
+            not the full classical Shadbala.
+          </p>
+        </div>
+      )}
       {reading?.panchamahapurushaYogas?.length > 0 && (
         <div>
           <h4 className="text-sm font-semibold text-primary mb-3">
@@ -368,7 +466,9 @@ function PlanetsTab({ reading, chart }: { reading: any; chart: any }) {
               <p className="text-xs text-muted-foreground mt-0.5 font-mono">
                 {ZODIAC_NAMES[p.sign]?.en || "—"} {p.signDegree?.toFixed(2)}° ·{" "}
                 {p.nakshatra}
-                {nakNameSi(p.nakshatra) && <span className="text-ash"> ({nakNameSi(p.nakshatra)})</span>}
+                {nakNameSi(p.nakshatra) && (
+                  <span className="text-ash"> ({nakNameSi(p.nakshatra)})</span>
+                )}
                 {p.nakshatraLord ? ` · ${p.nakshatraLord}` : ""}
               </p>
             </div>

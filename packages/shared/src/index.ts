@@ -102,11 +102,15 @@ export interface House {
 export interface DasaPeriod {
   lord: Planet;
   lordName: { en: string; si: string };
+  /** ISO date (YYYY-MM-DD) — real calendar dates in the birth timezone */
   startDate: string;
   endDate: string;
   totalYears: number;
   subPeriods: SubDasa[];
 }
+
+/** One Mahadasa of the full Vimshottari cycle. */
+export interface DasaTimelineEntry extends DasaPeriod {}
 
 export interface SubDasa {
   lord: Planet;
@@ -138,6 +142,7 @@ export interface BirthChart {
   rasiChart: ZodiacSign[];
   navamsaChart: ZodiacSign[];
   currentDasa: DasaPeriod | null;
+  dasaTimeline: DasaTimelineEntry[];
 }
 
 // ─── Interpretation ──────────────────────────────────────────

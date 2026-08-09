@@ -13,6 +13,7 @@ import {
   real,
   timestamp,
   uuid,
+  index,
 } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
@@ -53,3 +54,30 @@ export const predictions = pgTable("predictions", {
   provider: text("provider").default("groq"), // AI provider used
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+/**
+ * Family chart vault — no-login cloud storage for birth charts.
+ *
+ * A device generates a random family token (stored in the browser) and sends
+ * it as the `X-Family-Id` header. All charts saved under that token are
+ * private to the family. The full computed chart + reading are stored so
+ * reloading is instant (no recompute, no AI cost).
+ */
+export const savedCharts = pgTable(
+  "saved_charts",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    familyId: text("family_id").notNull(),
+    label: text("label").notNull(), // display name, e.g. "Father"
+    birthData: text("birth_data").notNull(), // JSON — form inputs
+    chart: text("chart").notNull(), // JSON — full BirthChart
+    reading: text("reading").notNull(), // JSON — full compiled reading
+    hash: text("hash"), // birth-data hash for dedup
+    lastAccessedAt: timestamp("last_accessed_at").defaultNow(),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => [
+    index("saved_charts_family_idx").on(t.familyId),
+    index("saved_charts_access_idx").on(t.lastAccessedAt),
+  ],
+);

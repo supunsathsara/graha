@@ -8,6 +8,9 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "validate:matchmaking": "tsx scripts/validate-matchmaking.ts",
+    "validate:dasa": "tsx scripts/validate-dasa.ts",
+    "validate:ephemeris": "tsx scripts/validate-ephemeris.ts",
+    "validate:divisional": "tsx scripts/validate-divisional.ts",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"

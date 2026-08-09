@@ -323,44 +323,113 @@ export function getDignity(
 }
 
 // ─── Vimshottari Dasa ────────────────────────────────────────
-const DASA_LORDS = [0, 1, 2, 3, 4, 5, 6, 10, 11] as const;
-const DASA_YEARS = [6, 10, 7, 18, 16, 19, 17, 18, 7];
+// The classic 120-year cycle, in correct Vimshottari order:
+// Ketu(7) → Venus(20) → Sun(6) → Moon(10) → Mars(7) → Rahu(18)
+//         → Jupiter(16) → Saturn(19) → Mercury(17)  = 120 years.
+const DASA_SEQUENCE = [11, 3, 0, 1, 4, 10, 5, 6, 2] as const; // planet ids
+const DASA_YEARS = [7, 20, 6, 10, 7, 18, 16, 19, 17];
 
-export function calculateCurrentDasa(
+const NAKSHATRA_DEG = 360 / 27; // 13°20′
+const DAYS_PER_YEAR = 365.25;
+
+interface DasaTimelineEntry {
+  lord: Planet;
+  lordName: { en: string; si: string };
+  startDate: string; // ISO date (local birth timezone)
+  endDate: string;
+  totalYears: number;
+  subPeriods: SubDasa[];
+}
+
+function isoDate(date: DateTime): string {
+  return date.toISODate() || "";
+}
+
+function addYears(date: DateTime, years: number): DateTime {
+  return date.plus({ days: Math.round(years * DAYS_PER_YEAR) });
+}
+
+/**
+ * Full Vimshottari Mahadasa timeline (9 periods) with real calendar dates.
+ *
+ * The birth dasa is the lord of the Moon's nakshatra. Its remaining balance
+ * at birth = (degrees left in the nakshatra / 13°20′) × the lord's years;
+ * the dasa itself is considered to have begun at birth with that balance.
+ * Subsequent Mahadasas run for their full classical durations, chained
+ * without gaps, ending 120 − (elapsed) years after birth.
+ */
+export function computeVimshottariTimeline(
   birthJd: number,
-  currentJd: number,
-): DasaPeriod | null {
+  birthLocal: DateTime,
+): DasaTimelineEntry[] {
   const moonPos = getPlanetPosition(birthJd, 1);
-  if (!moonPos) return null;
+  if (!moonPos) return [];
 
   const nakIndex = getNakshatraIndex(moonPos.longitude);
   const remainingDeg = getNakshatraRemaining(moonPos.longitude);
-  const totalDeg = 13.33;
-  const lordIndex = nakIndex % 9;
-  const yearsInNak = DASA_YEARS[lordIndex];
-  const elapsed = ((totalDeg - remainingDeg) / totalDeg) * yearsInNak;
+  const birthLordIdx = nakIndex % 9;
 
-  let remaining = yearsInNak - elapsed;
-  let accumulator = 0;
+  // Balance of the birth Mahadasa remaining at the moment of birth.
+  const balanceYears =
+    (remainingDeg / NAKSHATRA_DEG) * DASA_YEARS[birthLordIdx];
+
+  const timeline: DasaTimelineEntry[] = [];
+  let cursor = birthLocal;
 
   for (let i = 0; i < 9; i++) {
-    const lord = (lordIndex + i + 1) % 9;
-    const years = DASA_YEARS[lord];
-    if (remaining <= years) {
-      const planetId = DASA_LORDS[lord];
-      return {
-        lord: planetId as unknown as Planet,
-        lordName: PLANET_NAMES[planetId] || { en: "Unknown", si: "නොදනී" },
-        startDate: `${Math.round(accumulator)} years after birth`,
-        endDate: `${Math.round(accumulator + years)} years after birth`,
-        totalYears: years,
-        subPeriods: generateSubDasas(planetId, years),
-      };
-    }
-    remaining -= years;
-    accumulator += years;
+    const idx = (birthLordIdx + i) % 9;
+    const lordId = DASA_SEQUENCE[idx];
+    const years = i === 0 ? balanceYears : DASA_YEARS[idx];
+    const start = cursor;
+    const end = addYears(start, years);
+
+    timeline.push({
+      lord: lordId as unknown as Planet,
+      lordName: PLANET_NAMES[lordId] || { en: "Unknown", si: "නොදනී" },
+      startDate: isoDate(start),
+      endDate: isoDate(end),
+      totalYears: Math.round(years * 100) / 100,
+      subPeriods: generateSubDasas(lordId, years, start),
+    });
+
+    cursor = end;
   }
-  return null;
+
+  return timeline;
+}
+
+/**
+ * Current Dasa — the Mahadasa active at `currentJd` (defaults to now),
+ * found from the correct timeline with real dates.
+ */
+export function calculateCurrentDasa(
+  birthJd: number,
+  currentJd: number,
+  birthLocal: DateTime,
+): DasaPeriod | null {
+  const timeline = computeVimshottariTimeline(birthJd, birthLocal);
+  if (!timeline.length) return null;
+
+  const now = DateTime.fromMillis((currentJd - 2440587.5) * 86400000, {
+    zone: "UTC",
+  });
+
+  // Find the period whose [start, end) window contains "now".
+  const active =
+    timeline.find((p) => {
+      const s = DateTime.fromISO(p.startDate + "T00:00:00");
+      const e = DateTime.fromISO(p.endDate + "T00:00:00");
+      return now >= s && now < e;
+    }) || timeline[0];
+
+  return {
+    lord: active.lord,
+    lordName: active.lordName,
+    startDate: active.startDate,
+    endDate: active.endDate,
+    totalYears: active.totalYears,
+    subPeriods: active.subPeriods,
+  };
 }
 
 function getNakshatraIndex(longitude: number): number {
@@ -381,26 +450,35 @@ function getNakshatraRemaining(longitude: number): number {
   return 360 - normLon;
 }
 
-function generateSubDasas(mainLord: number, totalYears: number): SubDasa[] {
+/**
+ * Antardasas within a Mahadasa: each sub-period lasts
+ * (subLordYears / 120) × mahadasaYears, with real dates.
+ */
+function generateSubDasas(
+  mainLord: number,
+  totalYears: number,
+  start: DateTime,
+): SubDasa[] {
   const subDasas: SubDasa[] = [];
-  const startIndex = DASA_LORDS.indexOf(
-    mainLord as unknown as (typeof DASA_LORDS)[number],
+  const startIndex = DASA_SEQUENCE.indexOf(
+    mainLord as unknown as (typeof DASA_SEQUENCE)[number],
   );
   if (startIndex === -1) return subDasas;
 
-  let accumulatedMonths = 0;
+  let cursor = start;
   for (let i = 0; i < 9; i++) {
-    const lordIndex = (startIndex + i) % 9;
-    const planetId = DASA_LORDS[lordIndex];
-    const subMonths = (DASA_YEARS[lordIndex] / 120) * totalYears * 12;
+    const idx = (startIndex + i) % 9;
+    const lordId = DASA_SEQUENCE[idx];
+    const subYears = (DASA_YEARS[idx] / 120) * totalYears;
+    const end = addYears(cursor, subYears);
     subDasas.push({
-      lord: planetId as unknown as Planet,
-      lordName: PLANET_NAMES[planetId] || { en: "Unknown", si: "නොදනී" },
-      startDate: `${Math.floor(accumulatedMonths / 12)}y ${Math.round(accumulatedMonths % 12)}m`,
-      endDate: `${Math.floor((accumulatedMonths + subMonths) / 12)}y ${Math.round((accumulatedMonths + subMonths) % 12)}m`,
-      totalMonths: Math.round(subMonths),
+      lord: lordId as unknown as Planet,
+      lordName: PLANET_NAMES[lordId] || { en: "Unknown", si: "නොදනී" },
+      startDate: isoDate(cursor),
+      endDate: isoDate(end),
+      totalMonths: Math.round(subYears * 12),
     });
-    accumulatedMonths += subMonths;
+    cursor = end;
   }
   return subDasas;
 }
@@ -472,7 +550,13 @@ export function computeBirthChart(params: {
     `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`,
     "UTC",
   );
-  const currentDasa = calculateCurrentDasa(jd, nowJd);
+
+  // Birth moment in local time — anchors all Dasa dates.
+  const birthLocal = DateTime.fromMillis((jd - 2440587.5) * 86400000, {
+    zone: timezone || "Asia/Colombo",
+  });
+  const currentDasa = calculateCurrentDasa(jd, nowJd, birthLocal);
+  const dasaTimeline = computeVimshottariTimeline(jd, birthLocal);
 
   // Rasi chart based on Moon sign
   const moonPos = planets.find((p) => p.planet === 1);
@@ -505,6 +589,7 @@ export function computeBirthChart(params: {
     rasiChart,
     navamsaChart: navamsaSigns,
     currentDasa,
+    dasaTimeline,
   };
 }
 

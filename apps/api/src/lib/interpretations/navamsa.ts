@@ -116,6 +116,88 @@ export function buildNavamsaChartArray(
 }
 
 /**
+ * Dashamsha (D10) — the career/profession divisional chart.
+ *
+ * Parashara rule: each sign is divided into 10 parts of 3° each. In ODD
+ * signs (1-based: Aries, Gemini, Leo, Libra, Sagittarius, Aquarius — i.e.
+ * 0-based indices 0,2,4,6,8,10) the dashamshas begin from the SAME sign;
+ * in EVEN signs (0-based indices 1,3,5,7,9,11) from the 9TH sign from it.
+ *
+ *   dashamshaSign = (startSign + part) % 12
+ *   part = floor(degInSign / 3)   // 0–9
+ *   0-based even index → startSign = sign (same)
+ *   0-based odd index  → startSign = (sign + 8) % 12   // the 9th from the sign
+ */
+export function getDashamshaSign(longitude: number): number {
+  const normLon = ((longitude % 360) + 360) % 360;
+  const sign = Math.floor(normLon / 30);
+  const degInSign = normLon % 30;
+  const part = Math.floor(degInSign / 3); // 0-9
+  const startSign = sign % 2 === 0 ? sign : (sign + 8) % 12;
+  return (startSign + part) % 12;
+}
+
+/**
+ * Computes the Dashamsha (D10) positions for all planets + the D10 lagna.
+ */
+export function computeDashamshaChart(chart: BirthChart): {
+  planetsInDashamsha: Array<{ planetId: number; dashamshaSign: number }>;
+  dashamshaLagna: number;
+} {
+  const planetsInDashamsha: Array<{ planetId: number; dashamshaSign: number }> =
+    [];
+  for (const planet of chart.planets) {
+    planetsInDashamsha.push({
+      planetId: planet.planet as unknown as number,
+      dashamshaSign: getDashamshaSign(planet.longitude),
+    });
+  }
+  const dashamshaLagna = getDashamshaSign(chart.lagna.longitude);
+  return { planetsInDashamsha, dashamshaLagna };
+}
+
+/**
+ * Interpret a planet in Dashamsha for career/profession analysis.
+ */
+export function getDashamshaPlanetInterpretation(
+  planetId: number,
+  dashamshaSign: number,
+): string {
+  const planetName = getPlanetName(planetId);
+  const signName = getSignName(dashamshaSign);
+  const texts: Record<number, Record<number, string>> = {
+    0: {
+      4: "Sun in Leo D10: leadership, executive authority, command roles.",
+      9: "Sun in Capricorn D10: disciplined career, administrative power.",
+    },
+    4: {
+      0: "Mars in Aries D10: pioneering ventures, defense, engineering.",
+      9: "Mars in Capricorn D10: technical mastery, project leadership.",
+    },
+    5: {
+      8: "Jupiter in Sagittarius D10: teaching, law, publishing, higher knowledge.",
+      3: "Jupiter in Cancer D10: nurturing professions, consultancy, care.",
+    },
+    6: {
+      9: "Saturn in Capricorn D10: management, administration, long-term projects.",
+      10: "Saturn in Aquarius D10: systems, technology, organizations.",
+    },
+    3: {
+      1: "Venus in Taurus D10: finance, banking, arts, design.",
+      6: "Venus in Libra D10: partnerships, law, diplomacy, aesthetics.",
+    },
+    2: {
+      2: "Mercury in Gemini D10: communication, trade, media, analytics.",
+      5: "Mercury in Virgo D10: precision work, accounting, research.",
+    },
+  };
+  const specific = texts[planetId]?.[dashamshaSign];
+  return specific
+    ? `In the D10 career chart, ${planetName} in ${signName}: ${specific}`
+    : `In the D10 career chart, ${planetName} is placed in ${signName}, colouring professional expression with ${signName.toLowerCase()} themes.`;
+}
+
+/**
  * Interpret a planet in Navamsa for marriage/relationship analysis.
  */
 export function getNavamsaPlanetInterpretation(

@@ -33,6 +33,7 @@ import { predictionRouter } from "./routes/prediction.js";
 import { profileRouter } from "./routes/profile.js";
 import { matchRouter } from "./routes/match.js";
 import { panchangaRouter } from "./routes/panchanga.js";
+import { vaultRouter } from "./routes/vault.js";
 import { logRequest, logError } from "./lib/logger.js";
 import { rateLimit } from "./lib/ratelimit.js";
 
@@ -95,6 +96,7 @@ app.route("/api/prediction", predictionRouter);
 app.route("/api/profile", profileRouter);
 app.route("/api/match", matchRouter);
 app.route("/api/panchanga", panchangaRouter);
+app.route("/api/vault", vaultRouter);
 
 // ─── Health Check ───────────────────────────────────────────
 app.get("/health", (c) => {
@@ -123,6 +125,7 @@ app.get("/", (c) => {
       "POST /api/prediction/daily": "Daily prediction",
       "POST /api/match/compute": "Guna Milan matchmaking (36-point Ashtakoota)",
       "GET /api/panchanga": "Sinhala almanac — Rahu/Yama/Gulika Kala, B.E. date",
+      "POST /api/vault/charts": "Family chart vault — save/load birth charts",
       "POST /api/profile/create": "Create user profile",
     },
   });
