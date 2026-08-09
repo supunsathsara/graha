@@ -14,7 +14,21 @@ const FEATURES = [
   "Navamsa D9",
 ];
 
-async function loadFont(weight: 400 | 500 | 600 | 700) {
+// Scattered background stars — fixed positions so the image is deterministic
+const STARS = [
+  { x: 90, y: 80, r: 2, o: 0.5 },
+  { x: 180, y: 220, r: 1.5, o: 0.4 },
+  { x: 1040, y: 100, r: 2, o: 0.45 },
+  { x: 1120, y: 260, r: 1.5, o: 0.35 },
+  { x: 60, y: 420, r: 1.5, o: 0.4 },
+  { x: 1080, y: 460, r: 2, o: 0.5 },
+  { x: 300, y: 60, r: 1.5, o: 0.35 },
+  { x: 900, y: 560, r: 1.5, o: 0.35 },
+  { x: 150, y: 540, r: 2, o: 0.4 },
+  { x: 1000, y: 340, r: 1.5, o: 0.3 },
+];
+
+async function loadFont(weight: 400 | 500 | 700) {
   const css = await fetch(
     `https://fonts.googleapis.com/css2?family=Inter:wght@${weight}&display=swap`,
   ).then((res) => res.text());
@@ -26,11 +40,29 @@ async function loadFont(weight: 400 | 500 | 600 | 700) {
 }
 
 export default async function OGImage() {
-  const [inter500, inter600, inter400] = await Promise.all([
-    loadFont(500),
-    loadFont(600),
-    loadFont(400),
-  ]);
+  let fonts: {
+    name: string;
+    data: ArrayBuffer;
+    weight: 400 | 500 | 700;
+    style: "normal";
+  }[] = [];
+
+  try {
+    const [inter400, inter500, inter700] = await Promise.all([
+      loadFont(400),
+      loadFont(500),
+      loadFont(700),
+    ]);
+    fonts = [
+      { name: "Inter", data: inter400, weight: 400, style: "normal" },
+      { name: "Inter", data: inter500, weight: 500, style: "normal" },
+      { name: "Inter", data: inter700, weight: 700, style: "normal" },
+    ];
+  } catch {
+    // If Google Fonts is unreachable, fall back to Satori's default
+    // sans-serif rather than failing the whole OG image build.
+    fonts = [];
+  }
 
   return new ImageResponse(
     <div
@@ -58,7 +90,24 @@ export default async function OGImage() {
         }}
       />
 
-      {/* Yantra-style concentric rings behind the title */}
+      {/* Star scatter */}
+      {STARS.map((s, i) => (
+        <div
+          key={i}
+          style={{
+            position: "absolute",
+            top: s.y,
+            left: s.x,
+            width: s.r * 2,
+            height: s.r * 2,
+            borderRadius: "50%",
+            background: `rgba(224,208,255,${s.o})`,
+            display: "flex",
+          }}
+        />
+      ))}
+
+      {/* Concentric rings behind the title */}
       {[520, 400, 280].map((d, i) => (
         <div
           key={d}
@@ -72,6 +121,38 @@ export default async function OGImage() {
           }}
         />
       ))}
+
+      {/* Kundli-style diamond (North Indian chart motif) */}
+      <div
+        style={{
+          position: "absolute",
+          width: 330,
+          height: 330,
+          border: "1px solid rgba(192,132,252,0.16)",
+          transform: "rotate(45deg)",
+          display: "flex",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          width: 330,
+          height: 1,
+          background: "rgba(192,132,252,0.12)",
+          transform: "rotate(45deg)",
+          display: "flex",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          width: 330,
+          height: 1,
+          background: "rgba(192,132,252,0.12)",
+          transform: "rotate(-45deg)",
+          display: "flex",
+        }}
+      />
 
       {/* Corner glows */}
       <div
@@ -177,6 +258,19 @@ export default async function OGImage() {
         ))}
       </div>
 
+      {/* Domain caption */}
+      <div
+        style={{
+          display: "flex",
+          marginTop: 26,
+          fontSize: 14,
+          color: "rgba(196,181,253,0.45)",
+          letterSpacing: "0.04em",
+        }}
+      >
+        graha.chutte.dev
+      </div>
+
       {/* Bottom accent line */}
       <div
         style={{
@@ -193,11 +287,7 @@ export default async function OGImage() {
     </div>,
     {
       ...size,
-      fonts: [
-        { name: "Inter", data: inter400, weight: 400, style: "normal" },
-        { name: "Inter", data: inter500, weight: 500, style: "normal" },
-        { name: "Inter", data: inter600, weight: 600, style: "normal" },
-      ],
+      fonts,
     },
   );
 }
